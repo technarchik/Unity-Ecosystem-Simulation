@@ -16,6 +16,8 @@ public class World
     public EventManager EventManager { get; protected set; }
     public WorldData Data { get; protected set; }
 
+    public EnvironmentSystem Environment; // EnvSystem: its a system for env changes
+
     public World(int w, int h)
     {
         Width = w;
@@ -26,6 +28,7 @@ public class World
         FoodManager = new FoodManager();
         EventManager = new EventManager();
         Data = new WorldData();
+        Environment = new EnvironmentSystem(Width, Height, this); // EnvSystem: initialization of env system
 
         for (int x = 0; x < Width; x++)
         {
@@ -41,6 +44,7 @@ public class World
     // класс обновляет только животных (не еду, тайлы, климат)
     public void Update(float deltaTime)
     {
+        Environment.Update(deltaTime); // EnvSystem: updating env system
         AnimalManager.Update(deltaTime);
     }
 
