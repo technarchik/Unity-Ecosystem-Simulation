@@ -10,9 +10,9 @@ public class FoodManager
     public List<Tile> FoodTiles { get; protected set; }
     private List<Tile> newFoodTiles;
 
-    private Action<Food> OnFoodSproutedCallback;
+    private Action<Food> OnFoodSproutedCallback; // выросло
     private Action<Food> OnFoodChangedCallback;
-    private Action<Food> OnFoodExhaustedCallback;
+    private Action<Food> OnFoodExhaustedCallback; // закончилось
 
     public FoodManager()
     {
@@ -33,6 +33,9 @@ public class FoodManager
     /// <summary>
     /// Spreads Food across the map, should only be called once per day.
     /// </summary>
+    // myTODO: может сделать здесь регенерацию еды?
+    // (но тогда сломается механика распределения по тайлам животных, потому что они ходят в поисках новой пищи)
+    // либо для сложного режима сделать вырождение постепенное еды
     private void SpreadFoodAcrossMap()
     {
         int oldCount = FoodTiles.Count;

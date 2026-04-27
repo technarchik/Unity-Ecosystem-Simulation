@@ -38,6 +38,7 @@ public class World
         tileGraph = null;
     }
 
+    // класс обновляет только животных (не еду, тайлы, климат)
     public void Update(float deltaTime)
     {
         AnimalManager.Update(deltaTime);
@@ -62,6 +63,8 @@ public class World
         return (Math.Sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)));
     }
 
+    //------ВАЖНО: поток данных - отсюда идет генерация в TerrainData -> WorldData -> World
+    // делегирует TerrainGenerator генерацию террейна
     public void GenerateTerrain(int seed, float scale, int octaves, float persistence, float lacunarity, Vector2 offset, float waterHeight, float sandHeight, float grassHeight, int generationMode)
     {
         Data.TerrainData = TerrainGenerator.GenerateTerrain(tiles, seed, scale, octaves, persistence, lacunarity, offset, waterHeight, sandHeight, grassHeight, generationMode);
@@ -85,6 +88,7 @@ public class World
         Data.TerrainData = TerrainGenerator.GenerateTerrain(tiles, seed, 44, 5, 0.229f, 3, new Vector2(0, 0), waterHeight, aridity, 1, generationType);
     }
 
+    // пересчитывает все списки тайлов, НЕ пересоздает тайл-объекты
     public void UpdateTerrain()
     {
         Data.ClearTileData();
@@ -93,6 +97,7 @@ public class World
 
     public void ChangeWaterLevel(float change)
     {
+        // clamp
         if (Data.WaterHeight + change > 1)
         {
             change = 1 - Data.WaterHeight;
@@ -142,6 +147,8 @@ public class World
         UpdateTerrain();
     }
 
+    // myTODO: возможно здесь нужно будет менять рандом рейндж
+    // здесь задаются начальные условия симуляции: a.Hunger и a.Thirst
     public void SpawnAnimals(int preyAmount, int predatorAmount)
     {
         int[] higestpoint = TerrainGenerator.GetHighestPoint(Data.TerrainData);
@@ -182,6 +189,7 @@ public class World
     /// Gets all of the water tiles on the map.
     /// </summary>
     /// <returns>List of water tiles</returns>
+    // myTODO: API доступа (возможно потребуется для расширения
     public List<Tile> getWaterTiles()
     {
         return Data.WaterTiles;
@@ -200,6 +208,7 @@ public class World
     /// Gets all the grass tiles on the map.
     /// </summary>
     /// <returns>List of grass tiles</returns>
+    // myTODO: API доступа (возможно потребуется для расширения
     public List<Tile> getGrassTiles() 
     {
         return Data.GrassTiles;
@@ -209,6 +218,7 @@ public class World
     /// Gets all the tiles with food on the map.
     /// </summary>
     /// <returns>List of tiles that contain food</returns>
+    // myTODO: API доступа (возможно потребуется для расширения
     public List<Tile> getFoodTiles() 
     {
         return FoodManager.FoodTiles;

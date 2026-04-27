@@ -9,6 +9,7 @@ public class WorldData
 {
     #region TerrainData
 
+    // WorldData = обертка для TerrainData
     private TerrainData terrainData;
     public TerrainData TerrainData
     {
@@ -28,7 +29,7 @@ public class WorldData
     }
 
     #region Noise Variables
-
+    // Используется только генератором
     public float[,] Noisemap { get { return terrainData.noisemap; } protected set { } }
 
     public int Seed { get { return terrainData.seed; } protected set { } }
@@ -41,7 +42,7 @@ public class WorldData
     #endregion
 
     #region Tile Regions
-
+    // Это пороговые значения, не сами тайлы
     public float WaterHeight { get { return terrainData.waterHeight; } set { terrainData.waterHeight = value; } }
     public float WaterHeightInitial { get { return terrainData.initialWaterHeight; } protected set { } }
 
@@ -55,9 +56,11 @@ public class WorldData
     #endregion
 
     #region Tile Data
-
+    // Списки тайлов (ключевая часть)
+    // кэш + ускорение (иначе пришлось бы обходить весь массив)
     public List<Tile> WaterTiles { get { return terrainData.waterTiles; } protected set { } }
 
+    // проценты покрытия (удобно для балансировки и аналитики)
     public float WaterPercent { get { return ((float)terrainData.waterTiles.Count / (float)terrainData.numTiles) * 100; } protected set { } }
 
     public List<Tile> SandTiles { get { return terrainData.sandTiles; } protected set { } }
@@ -83,7 +86,7 @@ public class WorldData
     #endregion
 
     #region HeatMap
-
+    // просто тепловая карта покрытия агентами
     public float HeatMapMax{ set; get; }
     public float HeatMapMin { set; get; }
 
@@ -107,6 +110,7 @@ public class WorldData
 }
 
 // The TerrainData struct is used to easily return multiple objects back to world after each GenerateTerrain call.
+// Структура используется для простого возврата нескольких объектов обратно в world после каждого вызова GenerateTerrain.
 public struct TerrainData
 {
     public int numTiles;
@@ -137,7 +141,7 @@ public struct TerrainData
     public List<Tile> grassTiles;
 
     // used for meta gaming where water is, may not stay for long.
-    public List<Tile> coastTiles;
+    public List<Tile> coastTiles; // берег??
 
     public TerrainData(int numTiles, float[,] noisemap, int seed, float scale, int octaves, float persistence, float lacunarity, Vector2 offset, float waterHeight, float sandHeight, float grassHeight)
     {
