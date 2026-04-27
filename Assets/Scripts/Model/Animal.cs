@@ -52,7 +52,7 @@ public abstract class Animal
     public Tile NextTile { get; protected set; }
     public Tile LastTile { get; protected set; }
     public AnimalManager AnimalManager { get; protected set; }
-    public AnimalState CurrentState { get; protected set; }
+    public AnimalState CurrentState { get; protected set; } // Переменная состояния - FSM ядро
     public bool readyToBreed { get; protected set; }
     public Pregnancy pregnacy { get; protected set; }
     public int ID { get; protected set; }
@@ -62,8 +62,8 @@ public abstract class Animal
         get { return (int)Math.Floor(TimeAlive/TimeController.Instance.SECONDS_IN_A_DAY); }
     }
     public LifeStage lifeStage { get; protected set; }
-    public float Hunger;
-    public float Thirst;
+    public float Hunger; // Система потребностей
+    public float Thirst; // Система потребностей
     protected float timeSinceLastBreeded;
     protected float breedingCooldown; // can breed every 3 days
     public AnimalType AnimalType { get; protected set; }
@@ -122,7 +122,7 @@ public abstract class Animal
     /// Checks if both needs are above 50%.
     /// </summary>
     /// <returns>True if both needs are above 50%, false otherwise.</returns>
-    public bool NeedsMet()
+    public bool NeedsMet() // триггер переходов
     {
         return Hunger >= 0.5f && Thirst >= 0.5f;
     }
@@ -131,7 +131,7 @@ public abstract class Animal
     /// Checks if the animal is hungry. Hungry is defined when hunger is less than 0.3.
     /// </summary>
     /// <returns>True if hunger is less than 0.3.</returns>
-    public bool IsHungry()
+    public bool IsHungry() // триггер переходов
     {
         return Hunger <= 0.3f;
     }
@@ -140,7 +140,7 @@ public abstract class Animal
     /// Checks if the animal is thirsty. Thirsty is defined when thirst is less than 0.3.
     /// </summary>
     /// <returns>True if thirst is less than 0.3.</returns>
-    public bool IsThirsty()
+    public bool IsThirsty() // триггер переходов
     {
         return Thirst <= 0.3f;
     }
@@ -214,29 +214,28 @@ public abstract class Animal
             if (NextTile == null || NextTile == CurrentTile)
             {
                 
-                    //Get next tile from path finder
-                    if (path == null || path.Count == 0)
+                //Get next tile from path finder
+                if (path == null || path.Count == 0)
+                {
+                    // Generate path
+                    path = AnimalManager.PathManager.SolvePath(CurrentTile.World, CurrentTile, DestinationTile);
+
+                    if (path.Count == 0)
                     {
-                        // Generate path
-                        path = AnimalManager.PathManager.SolvePath(CurrentTile.World, CurrentTile, DestinationTile);
-
-                        if (path.Count == 0)
-                        {
-                            Debug.LogError("Could not find path to destination tile " + DestinationTile.X + ", " + DestinationTile.Y);
-                            path = null;
-                            return;
-                        }
-
-                        NextTile = path.Dequeue(); // skip first as it is our current tile
+                        Debug.LogError("Could not find path to destination tile " + DestinationTile.X + ", " + DestinationTile.Y);
+                        path = null;
+                        return;
                     }
 
-                    // Grab next tile from path
-                    NextTile = path.Dequeue();
+                    NextTile = path.Dequeue(); // skip first as it is our current tile
+                }
+
+                // Grab next tile from path
+                NextTile = path.Dequeue();
             }
         }
         else
         {
-
             if (NextTile == null || NextTile == CurrentTile)
             {
                 if (lifeStage == LifeStage.Child && !Mother.ShouldDie())
@@ -467,6 +466,7 @@ public abstract class Animal
     public void UpdateDoFollowingParent(float deltaTime)
     {
         // Can we now fend for ourselves
+        // выходит в Idle при взрослении
         if (lifeStage == LifeStage.Adult)
         {
             CurrentState = AnimalState.Idle;
@@ -474,6 +474,7 @@ public abstract class Animal
         }
 
         // Set out hunger and thirst
+        // копирует питание/жажду мамы
         if (Mother.CurrentState == AnimalState.Eating)
         {
             Hunger = 1f;

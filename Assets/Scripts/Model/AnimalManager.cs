@@ -73,6 +73,9 @@ public class AnimalManager
                 i++;
             }
 
+            // можно сказать, это "цикл FSM"
+            // вызывает Animal.Update(deltaTime)
+            // в наследниках вызывается нужный UpdateDo"X"()
             a.Update(deltaTime);
         }
     }
