@@ -8,6 +8,12 @@ public struct EnvironmentData
     public float Humidity;
     public float WindStrength;
 }
+public class TemperatureSource
+{
+    public Vector2 position;
+    public float baseTemperature;
+    public float currentOffset;
+}
 
 public class EnvironmentSystem
 {
@@ -28,9 +34,19 @@ public class EnvironmentSystem
     private float updateTimer;
     private float updateInterval = 0.1f; // more often than a day-tick
 
+    //-----Temperature-----
+    private List<TemperatureSource> sources = new List<TemperatureSource>();
+    private float dayTimer;
+    private float dayInterval;
+    private int changesPerDay = 3;
+    //---------------------
+
     public void Initialize()
     {
         InitializeMaps();
+
+        dayInterval = TimeController.Instance.SECONDS_IN_A_DAY / changesPerDay;
+        CreateTemperatureSources(5); // spots of Perlin-like noise
     }
 
     public EnvironmentSystem(int width, int height, World world)
@@ -84,6 +100,8 @@ public class EnvironmentSystem
     }
     public void Update(float deltaTime)
     {
+        UpdateTemperatureSources(deltaTime);
+
         updateTimer += deltaTime;
 
         if (updateTimer >= updateInterval)
@@ -96,7 +114,9 @@ public class EnvironmentSystem
         }
     }
 
-    // temperature (diffusion)
+    #region Temperature
+
+    /*old UpdateTemperature
     private void UpdateTemperature()
     {
         for (int x = 0; x < width; x++)
@@ -120,7 +140,93 @@ public class EnvironmentSystem
         }
 
         Swap(ref temperatureMap, ref temperatureBuffer);
+    }*/
+
+    private void UpdateTemperature()
+    {
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                float temp = 0f;
+
+                foreach (var s in sources)
+                {
+                    float dist = Vector2.Distance(new Vector2(x, y), s.position);
+
+                    // fading
+                    float influence = Mathf.Exp(-dist * 0.1f);
+
+                    temp += (s.baseTemperature + s.currentOffset) * influence;
+                }
+
+                // a little Perlin-like variation
+                float noise = Mathf.PerlinNoise(x * 0.05f, y * 0.05f);
+                temp += (noise - 0.5f) * 5f;
+
+                // impact of tile-type
+                Tile tile = world.GetTileAt(x, y);
+
+                if (tile.Type == TileType.Water)
+                    temp -= 3f;
+                else if (tile.Type == TileType.Sand)
+                    temp += 2f;
+
+                temperatureMap[x, y] = Mathf.Clamp(temp, -60f, 60f);
+            }
+        }
     }
+
+    // creating temp sources (spots)
+    private void CreateTemperatureSources(int count)
+    {
+        sources.Clear();
+
+        for (int i = 0; i < count; i++)
+        {
+            TemperatureSource s = new TemperatureSource();
+
+            s.position = new Vector2(
+                UnityEngine.Random.Range(0, width),
+                UnityEngine.Random.Range(0, height)
+            );
+
+            s.baseTemperature = UnityEngine.Random.Range(0f, 15f);
+            s.currentOffset = 0f;
+
+            sources.Add(s);
+        }
+    }
+
+    // updating temp (now - 3 timew per day)
+    private void UpdateTemperatureSources(float deltaTime)
+    {
+        dayTimer += deltaTime;
+
+        if (dayTimer >= dayInterval)
+        {
+            dayTimer = 0f;
+
+            foreach (var s in sources)
+            {
+                float roll = UnityEngine.Random.value;
+
+                float delta;
+
+                if (roll < 0.6f)
+                    delta = UnityEngine.Random.Range(-5f, 5f);
+                else if (roll < 0.9f)
+                    delta = UnityEngine.Random.Range(-10f, 10f);
+                else
+                    delta = UnityEngine.Random.Range(-15f, 15f);
+
+                s.currentOffset += delta;
+                s.currentOffset = Mathf.Clamp(s.currentOffset, -60f, 60f);
+            }
+        }
+    }
+
+    #endregion
 
     // humidity (diffusion + water)
     private void UpdateHumidity()

@@ -83,8 +83,10 @@ public class WorldController : MonoBehaviour
 
         //207
         World.GenerateTerrain(WorldSeed, WaterLevel, AridityLevel, WorldType);
-        // ÈÍÈÖÈÀËÈÇÀÖÈß ÊËÈÌÀÒÀ ÏÎÑËÅ ÒÅÐÐÅÉÍÀ
+
+        // EnvSystem: init after terrain
         World.Environment.Initialize();
+
         World.SproutInitialFood();
         World.SpawnAnimals(PreyCount, PredatorCount);
     }
@@ -131,6 +133,10 @@ public class WorldController : MonoBehaviour
         TimeController.Instance.RegisterOnNewDayCallback(World.FoodManager.OnNewDay);
         TimeController.Instance.RegisterOnNewDayCallback(o => WorldCountLog());
         TimeController.Instance.RegisterOnNewDayCallback(World.EventManager.OnNewDay);
+
+        // EnvSystem: DEBUG VIEW
+        var debugView = gameObject.AddComponent<EnvironmentDebugView>();
+        debugView.World = World;
     }
 
     private void OnApplicationQuit()
