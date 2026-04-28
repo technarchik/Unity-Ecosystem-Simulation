@@ -15,8 +15,7 @@ public class World
     public FoodManager FoodManager { get; protected set; }
     public EventManager EventManager { get; protected set; }
     public WorldData Data { get; protected set; }
-
-    public EnvironmentSystem Environment; // EnvSystem: its a system for env changes
+    public EnvironmentSystem Environment { get; protected set; } // EnvSystem: its a system for env changes
 
     public World(int w, int h)
     {

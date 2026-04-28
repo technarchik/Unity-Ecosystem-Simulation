@@ -28,6 +28,11 @@ public class EnvironmentSystem
     private float updateTimer;
     private float updateInterval = 0.1f; // more often than a day-tick
 
+    public void Initialize()
+    {
+        InitializeMaps();
+    }
+
     public EnvironmentSystem(int width, int height, World world)
     {
         this.width = width;
@@ -42,7 +47,7 @@ public class EnvironmentSystem
         temperatureBuffer = new float[width, height];
         humidityBuffer = new float[width, height];
 
-        InitializeMaps();
+        //InitializeMaps();
     }
 
     private void InitializeMaps()
