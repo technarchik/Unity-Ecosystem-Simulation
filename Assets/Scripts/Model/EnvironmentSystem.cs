@@ -38,7 +38,7 @@ public class EnvironmentSystem
     private List<TemperatureSource> sources = new List<TemperatureSource>();
     private float dayTimer;
     private float dayInterval;
-    private int changesPerDay = 3;
+    private int changesPerDay = 10;
     //---------------------
 
     public void Initialize()
@@ -46,7 +46,7 @@ public class EnvironmentSystem
         InitializeMaps();
 
         dayInterval = TimeController.Instance.SECONDS_IN_A_DAY / changesPerDay;
-        CreateTemperatureSources(5); // spots of Perlin-like noise
+        CreateTemperatureSources(10); // spots of Perlin-like noise
     }
 
     public EnvironmentSystem(int width, int height, World world)
@@ -191,14 +191,14 @@ public class EnvironmentSystem
                 UnityEngine.Random.Range(0, height)
             );
 
-            s.baseTemperature = UnityEngine.Random.Range(0f, 15f);
+            s.baseTemperature = UnityEngine.Random.Range(0f, 10f);
             s.currentOffset = 0f;
 
             sources.Add(s);
         }
     }
 
-    // updating temp (now - 3 timew per day)
+    // updating temp
     private void UpdateTemperatureSources(float deltaTime)
     {
         dayTimer += deltaTime;
@@ -213,12 +213,13 @@ public class EnvironmentSystem
 
                 float delta;
 
-                if (roll < 0.6f)
-                    delta = UnityEngine.Random.Range(-5f, 5f);
-                else if (roll < 0.9f)
-                    delta = UnityEngine.Random.Range(-10f, 10f);
+                // variation of conditions
+                if (roll < 0.2f)
+                    delta = UnityEngine.Random.Range(-5f, 5f); // easy
+                else if (roll < 0.4f)
+                    delta = UnityEngine.Random.Range(-10f, 10f); // medium
                 else
-                    delta = UnityEngine.Random.Range(-15f, 15f);
+                    delta = UnityEngine.Random.Range(-20f, 20f); // hard
 
                 s.currentOffset += delta;
                 s.currentOffset = Mathf.Clamp(s.currentOffset, -60f, 60f);
@@ -237,7 +238,7 @@ public class EnvironmentSystem
             {
                 float baseHumidity = humidityMap[x, y];
 
-                // влияние воды
+                // impact of water
                 Tile tile = world.GetTileAt(x, y);
 
                 if (tile.Type == TileType.Water)
@@ -311,6 +312,7 @@ public class EnvironmentSystem
         b = temp;
     }
     #endregion
+
 
     #region API for animals
     public float GetTemperature(int x, int y)

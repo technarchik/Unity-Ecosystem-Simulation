@@ -17,6 +17,9 @@ public class WorldController : MonoBehaviour
     public EventLogController EventLogController;
     private Process graphWindow;
 
+    private EnvironmentDebugView debugView; // EnvSystem: DebugView
+    private bool debugViewEnabled = false;
+
     /// <summary>
     /// Helper variables for initial food simulation will be removed later on after prey is fully implemented.
     /// </summary>
@@ -127,6 +130,29 @@ public class WorldController : MonoBehaviour
         }
     }
 
+    // EnvSystem: Button for DebugView
+    public void ToggleEnvironmentDebugView()
+    {
+        debugViewEnabled = !debugViewEnabled;
+
+        if (debugViewEnabled)
+        {
+            // create if exist
+            if (debugView == null)
+            {
+                debugView = gameObject.AddComponent<EnvironmentDebugView>();
+                debugView.World = World;
+            }
+
+            debugView.enabled = true;
+        }
+        else
+        {
+            if (debugView != null)
+                debugView.enabled = false;
+        }
+    }
+
     private void Start()
     {
         TimeController.Instance.RegisterOnNewDayCallback(o => World.AnimalManager.AgeUpAnimals());
@@ -134,9 +160,6 @@ public class WorldController : MonoBehaviour
         TimeController.Instance.RegisterOnNewDayCallback(o => WorldCountLog());
         TimeController.Instance.RegisterOnNewDayCallback(World.EventManager.OnNewDay);
 
-        // EnvSystem: DEBUG VIEW
-        var debugView = gameObject.AddComponent<EnvironmentDebugView>();
-        debugView.World = World;
     }
 
     private void OnApplicationQuit()
