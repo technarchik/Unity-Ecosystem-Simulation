@@ -175,6 +175,7 @@ public abstract class Animal
     public void UpdateDoMovement(float deltaTime)
     {
         // check if swimming or not
+        // myTODO: mb make using stamina instead of variation model (like in Genshin Impact)
         if (CurrentTile.Type == TileType.Water && CurrentTile.GetWalkableNeighboursIncludingDiagonal().Count == 0)
         {
             if (LastTile == CurrentTile) // if this happens, they are stuck in water. Drown them.
@@ -250,7 +251,10 @@ public abstract class Animal
         }
 
         float distToTravel = Mathf.Sqrt(Mathf.Pow(CurrentTile.X - NextTile.X, 2) + Mathf.Pow(CurrentTile.Y - NextTile.Y, 2));
+        
+        // myTODO: speed used THERE (linear, permanent, not changing now)
         float distThisFrame = deltaTime * Speed;
+
         float percThisFrame = distThisFrame / distToTravel;
         movePercentage += percThisFrame;
         if (movePercentage >= 1)
@@ -399,7 +403,7 @@ public abstract class Animal
         //Found a partner and does not already have one
         else if (getPartner() == null)
         {
-           // Debug.Log(this.ToString() + "Partners " + FoundPartner.ToString());
+            // Debug.Log(this.ToString() + "Partners " + FoundPartner.ToString());
 
             this.setPartner(FoundPartner);
             FoundPartner.setPartner(this);
@@ -447,6 +451,11 @@ public abstract class Animal
 
     public void UpdateDoBreeding(float deltaTime)
     {
+        // breeding
+        //                    PREY          PREDATOR
+        // cooldown           smaller       bigger
+        // adult age          lately        early
+        // count of child     4-9           3-5
         AnimalManager.breedingManager.Breed(this, getPartner());
 
         //Setting them to
