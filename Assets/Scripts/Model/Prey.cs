@@ -7,7 +7,7 @@ public class Prey : Animal
 {
     public bool IsBeingChased { get; protected set; }
     public bool IsEaten { get; protected set; }
-    public Prey(Tile tile, AnimalManager animalManager, int id, Gender gender, Prey mother) : base(tile, 2f, 5, AnimalType.Prey, animalManager, id, gender, mother)
+    public Prey(Tile tile, AnimalManager animalManager, int id, Gender gender, Prey mother, Genome genome) : base(tile, AnimalType.Prey, animalManager, id, gender, mother, genome)
     {
         breedingCooldown = (2 * TimeController.Instance.SECONDS_IN_A_DAY) * WorldController.PreyBreedingRate;
         IsBeingChased = false;
@@ -362,11 +362,11 @@ public class Prey : Animal
 
     public override void GiveBirth()
     {
-        int litterSize = UnityEngine.Random.Range(4, 9);
+        int litterSize = UnityEngine.Random.Range(4, 9); // should be: genome.fertility
 
         for (int i = 0; i < litterSize; i++)
         {
-            Prey child = AnimalManager.SpawnPrey(CurrentTile, this);
+            Prey child = AnimalManager.SpawnPrey(CurrentTile, this, Genome.Inheritance(this.Genome)); // здесь метод передачи генома от родителя ребенку
             child.CurrentState = AnimalState.FollowingParent;
         }
 

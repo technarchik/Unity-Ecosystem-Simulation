@@ -42,12 +42,12 @@ public class AnimalManager
         // TODO: choose spawn locations
         for (int i = 0; i < preyAmount; i++)
         {
-            SpawnPrey(world.GetTileAt(spawnPointX, spawnPointY), i % 2 == 0 ? Gender.Male : Gender.Female, null);
+            SpawnPrey(world.GetTileAt(spawnPointX, spawnPointY), i % 2 == 0 ? Gender.Male : Gender.Female, null, Genome.CreateGenome());
         }
 
         for (int i = 0; i < predatorAmount; i++)
         {
-            SpawnPredator(world.GetTileAt(spawnPointX, spawnPointY), i % 2 == 0 ? Gender.Male : Gender.Female, null);
+            SpawnPredator(world.GetTileAt(spawnPointX, spawnPointY), i % 2 == 0 ? Gender.Male : Gender.Female, null, Genome.CreateGenome());
         }
     }
 
@@ -160,15 +160,15 @@ public class AnimalManager
     /// </summary>
     /// <param name="tile">Tile to spawn it on.</param>
     /// <returns>The predator spawned.</returns>
-    public Predator SpawnPredator(Tile tile, Predator mother)
+    public Predator SpawnPredator(Tile tile, Predator mother, Genome genome)
     {
         Gender gender = (UnityEngine.Random.Range(0, 2) == 0) ? Gender.Male : Gender.Female;
-        return SpawnPredator(tile, gender, mother);
+        return SpawnPredator(tile, gender, mother, genome);
     }
     
-    public Predator SpawnPredator(Tile tile, Gender gender, Predator mother)
+    public Predator SpawnPredator(Tile tile, Gender gender, Predator mother, Genome genome)
     {
-        Predator p = new Predator(tile, this, currentPredatorID, gender, mother);
+        Predator p = new Predator(tile, this, currentPredatorID, gender, mother, genome);
         Predators.Add(p);
         Spawn(p);
         currentPredatorID++;
@@ -180,15 +180,15 @@ public class AnimalManager
     /// </summary>
     /// <param name="tile">Tile to spawn it on.</param>
     /// <returns>The prey spawned.</returns>
-    public Prey SpawnPrey(Tile tile, Prey mother)
+    public Prey SpawnPrey(Tile tile, Prey mother, Genome genome)
     {
         Gender gender = (UnityEngine.Random.Range(0,2) == 0) ? Gender.Male : Gender.Female;
-        return SpawnPrey(tile, gender, mother);
+        return SpawnPrey(tile, gender, mother, genome);
     }
     
-    public Prey SpawnPrey(Tile tile, Gender gender, Prey mother)
+    public Prey SpawnPrey(Tile tile, Gender gender, Prey mother, Genome genome)
     {
-        Prey p = new Prey(tile, this, currentPreyID, gender, mother);
+        Prey p = new Prey(tile, this, currentPreyID, gender, mother, genome);
         Prey.Add(p);
         Spawn(p);
         currentPreyID++;

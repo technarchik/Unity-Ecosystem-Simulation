@@ -57,6 +57,7 @@ public abstract class Animal
     public Pregnancy pregnacy { get; protected set; }
     public int ID { get; protected set; }
     public float TimeAlive { get; protected set; }
+    public Genome Genome { get; protected set; }
     public int Age
     {
         get { return (int)Math.Floor(TimeAlive/TimeController.Instance.SECONDS_IN_A_DAY); }
@@ -79,21 +80,28 @@ public abstract class Animal
 
     protected Action<Animal> OnAnimalChangedCallback;
 
-    public Animal(Tile tile, float speed, int sightRange, AnimalType animalType, AnimalManager animalManager, int id, Gender gender, Animal mother)
+    public Animal(Tile tile, AnimalType animalType, AnimalManager animalManager, int id, Gender gender, Animal mother, Genome genome)
     {
+        Genome = genome;
+
         CurrentTile = tile;
         NextTile = tile;
         DestinationTile = tile;
         LastTile = tile;
+
         Hunger = 1f;
         Thirst = 1f;
-        Speed = speed;
+
+        Speed = genome.speed;
+        SightRange = genome.sightRange;
+
         movePercentage = 0f;
         swimDistance = 0;
-        SightRange = sightRange;
+
         AnimalType = animalType;
         AnimalManager = animalManager;
         CurrentState = AnimalState.Idle;
+
         ID = id;
         lifeStage = LifeStage.Child;
         AnimalSex = gender;

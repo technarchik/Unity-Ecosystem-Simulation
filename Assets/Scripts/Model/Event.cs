@@ -202,7 +202,7 @@ public class MigrationEvent : Event
             int amount = UnityEngine.Random.Range(1, Mathf.CeilToInt(severity * (maxPreds + 1))); // max 4 preds
             while (amount > 0)
             {
-                Predator newPrey = world.AnimalManager.SpawnPredator(spawnTile, null);
+                Predator newPrey = world.AnimalManager.SpawnPredator(spawnTile, null, Genome.CreateGenome());
                 int ageRand = UnityEngine.Random.Range(0, 4);
                 if (ageRand == 0)
                 {
@@ -221,7 +221,7 @@ public class MigrationEvent : Event
             int amount = UnityEngine.Random.Range(1, Mathf.CeilToInt(severity * (maxPrey + 1))); // max 12 rabbits
             while (amount > 0)
             {
-                Prey newPrey = world.AnimalManager.SpawnPrey(spawnTile, null);
+                Prey newPrey = world.AnimalManager.SpawnPrey(spawnTile, null, Genome.CreateGenome());
                 int ageRand = UnityEngine.Random.Range(0, 4);
                 if (ageRand == 0)
                 {
