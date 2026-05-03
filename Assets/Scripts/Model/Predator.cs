@@ -348,7 +348,7 @@ public class Predator : Animal
 
         for (int i = 0; i < litterSize; i++)
         {
-            Predator child = AnimalManager.SpawnPredator(CurrentTile, this, Genome.Inheritance(this.Genome)); // myTODO: здесь метод передачи генома от родителя ребенку
+            Predator child = AnimalManager.SpawnPredator(CurrentTile, this, this.Genome); // myTODO: здесь метод передачи генома от родителя ребенку Genome.Inheritance
             child.CurrentState = AnimalState.FollowingParent;
         }
 

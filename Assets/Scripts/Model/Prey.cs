@@ -402,7 +402,7 @@ public class Prey : Animal
 
         for (int i = 0; i < litterSize; i++)
         {
-            Prey child = AnimalManager.SpawnPrey(CurrentTile, this, Genome.Inheritance(this.Genome)); // myTODO: здесь метод передачи генома от родителя ребенку
+            Prey child = AnimalManager.SpawnPrey(CurrentTile, this, this.Genome); // myTODO: здесь метод передачи генома от родителя ребенку Genome.Inheritance
             child.CurrentState = AnimalState.FollowingParent;
         }
 
