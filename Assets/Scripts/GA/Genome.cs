@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class Genome
 {
-    public int HP = 100; // but its not genome... mb in Animal class?
-
     // moving
     public float speed;
     public float stamina;
@@ -25,22 +23,52 @@ public class Genome
     // environment
     public float tempResist;
 
-    public static Genome CreateGenome()
+    // eating
+    public float fatSave;
+    public float eatNeed;
+
+    public static Genome CreateGenome(AnimalType type)
     {
-        return new Genome
+        Genome genome = new Genome();
+
+        if (type == AnimalType.Prey)
         {
-            speed = UnityEngine.Random.Range(0.5f, 10f),
-            sightRange = UnityEngine.Random.Range(3, 10),
+            genome.speed = Random.Range(3f, 10f);
+            genome.sightRange = Random.Range(5, 12);
 
-            hungerDecreasingSpeed = UnityEngine.Random.Range(0.1f, 1f),
-            thirstDecreasingSpeed = UnityEngine.Random.Range(0.1f, 1f),
+            genome.hungerDecreasingSpeed = Random.Range(0.7f, 1.5f);
+            genome.thirstDecreasingSpeed = Random.Range(0.7f, 1.5f);
 
-            breedingCooldownMultiplyer = UnityEngine.Random.Range(0.5f, 2f),
-            fertility = UnityEngine.Random.Range(1, 5),
+            genome.breedingCooldownMultiplyer = Random.Range(0.5f, 1.2f);
+            genome.fertility = Random.Range(4, 8);             // big litter
 
-            swimAbility = UnityEngine.Random.Range(0f, 1f),
-            tempResist = UnityEngine.Random.Range(0f, 1f)
-        };
+            genome.swimAbility = Random.Range(0.2f, 0.6f);
+
+            genome.tempResist = Random.Range(0.3f, 0.7f);
+
+            genome.fatSave = Random.Range(0.5f, 1.0f);
+            genome.eatNeed = Random.Range(0.3f, 0.6f);
+        }
+        else // Predator
+        {
+            genome.speed = Random.Range(2f, 7f);
+            genome.sightRange = Random.Range(4, 10);
+
+            genome.hungerDecreasingSpeed = Random.Range(1.0f, 2.0f);
+            genome.thirstDecreasingSpeed = Random.Range(0.8f, 1.5f);
+
+            genome.breedingCooldownMultiplyer = Random.Range(1.0f, 2.0f);
+            genome.fertility = Random.Range(2, 4);             // small litter
+
+            genome.swimAbility = Random.Range(0.4f, 0.9f);     // better swimming
+
+            genome.tempResist = Random.Range(0.2f, 0.8f);
+
+            genome.fatSave = Random.Range(0.2f, 0.7f);
+            genome.eatNeed = Random.Range(0.7f, 1.2f);
+        }
+
+        return genome;
     }
 
     public static Genome Inheritance(Genome motherGenome)

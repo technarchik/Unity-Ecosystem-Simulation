@@ -2,17 +2,26 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GA : MonoBehaviour
+public class GA
 {
-    // Start is called before the first frame update
-    void Start()
+    public World world;
+
+    public int totalFoodForPrey;  // total count of food - ONLY for Prey
+    public int totalFoodForPredator;  // total count of food - ONLY for Predator
+
+    public GA(World world)
     {
-        
+        this.world = world;
     }
 
-    // Update is called once per frame
-    void Update()
+    public void UpdateFoodStats()
     {
-        
+        totalFoodForPrey = world.getTotalNutritionOnMap();
+        totalFoodForPredator = world.getPrey().Count;
     }
+    
+    //public float DoGA(float )
+    //{
+
+    //}
 }

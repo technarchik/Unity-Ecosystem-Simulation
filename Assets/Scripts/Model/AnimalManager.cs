@@ -42,12 +42,12 @@ public class AnimalManager
         // TODO: choose spawn locations
         for (int i = 0; i < preyAmount; i++)
         {
-            SpawnPrey(world.GetTileAt(spawnPointX, spawnPointY), i % 2 == 0 ? Gender.Male : Gender.Female, null, Genome.CreateGenome());
+            SpawnPrey(world.GetTileAt(spawnPointX, spawnPointY), i % 2 == 0 ? Gender.Male : Gender.Female, null, Genome.CreateGenome(AnimalType.Prey));
         }
 
         for (int i = 0; i < predatorAmount; i++)
         {
-            SpawnPredator(world.GetTileAt(spawnPointX, spawnPointY), i % 2 == 0 ? Gender.Male : Gender.Female, null, Genome.CreateGenome());
+            SpawnPredator(world.GetTileAt(spawnPointX, spawnPointY), i % 2 == 0 ? Gender.Male : Gender.Female, null, Genome.CreateGenome(AnimalType.Predator));
         }
     }
 

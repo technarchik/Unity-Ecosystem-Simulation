@@ -42,6 +42,19 @@ public enum AnimalState
     FollowingParent
 }
 
+public enum AdaptiveState // states for activating GA
+{
+    None,
+
+    // food lack
+    PreyFoodLack,
+    PredatorFoodLack,
+
+    // environment stress
+    TemperatureTooHigh,
+    TemperatureTooLow
+}
+
 public abstract class Animal
 {
     private Animal partner;
@@ -53,10 +66,12 @@ public abstract class Animal
     public Tile LastTile { get; protected set; }
     public AnimalManager AnimalManager { get; protected set; }
     public AnimalState CurrentState { get; protected set; } // Переменная состояния - FSM ядро
+    public AdaptiveState CurrentAdaptiveState { get; protected set; }
     public bool readyToBreed { get; protected set; }
     public Pregnancy pregnacy { get; protected set; }
     public int ID { get; protected set; }
     public float TimeAlive { get; protected set; }
+    public int TotalChildrenCount { get; protected set; }
     public Genome Genome { get; protected set; }
     public int Age
     {
@@ -65,6 +80,9 @@ public abstract class Animal
     public LifeStage lifeStage { get; protected set; }
     public float Hunger; // Система потребностей
     public float Thirst; // Система потребностей
+    public float HP { get; protected set; }
+    public float MaxHP { get; protected set; } = 100f;
+
     protected float timeSinceLastBreeded;
     protected float breedingCooldown; // can breed every 3 days
     public AnimalType AnimalType { get; protected set; }
@@ -75,6 +93,10 @@ public abstract class Animal
     public Animal Mother { get; protected set; }
     private float movePercentage;
     private int swimDistance; // used to keep track far animal has swam
+    
+    // --- for adaptive system ---
+    private float adaptiveCheckTimer;
+    private float adaptiveCheckInterval = 2f;
 
     private Queue<Tile> path;
 
@@ -91,6 +113,7 @@ public abstract class Animal
 
         Hunger = 1f;
         Thirst = 1f;
+        HP = MaxHP;
 
         Speed = genome.speed;
         SightRange = genome.sightRange;
@@ -101,12 +124,148 @@ public abstract class Animal
         AnimalType = animalType;
         AnimalManager = animalManager;
         CurrentState = AnimalState.Idle;
+        CurrentAdaptiveState = AdaptiveState.None;
 
         ID = id;
         lifeStage = LifeStage.Child;
         AnimalSex = gender;
         timeSinceLastBreeded = 0;
         Mother = mother;
+    }
+
+    /// <summary>
+    /// Timer for animal's adapting to changes.
+    /// </summary>
+    /// <param name="deltaTime">Time between last frame.</param>
+    protected void UpdateAdaptiveState(float deltaTime)
+    {
+        adaptiveCheckTimer += deltaTime;
+
+        if (adaptiveCheckTimer < adaptiveCheckInterval)
+            return;
+
+        adaptiveCheckTimer = 0f;
+
+        CurrentAdaptiveState = EvaluateAdaptiveState();
+    }
+
+    /// <summary>
+    /// Changing animal's AdaptiveState.
+    /// </summary>
+    private AdaptiveState EvaluateAdaptiveState()
+    {
+        var ga = WorldController.Instance.ga;
+
+        // --- FOOD ---
+        if (AnimalType == AnimalType.Prey)
+        {
+            int preyCount = ga.world.getPrey().Count;
+            if (preyCount == 0)
+                return AdaptiveState.None; // or AdaptiveState.EcosystemCollapse
+
+            float foodPerPrey = (float)ga.totalFoodForPrey / preyCount;
+            if (foodPerPrey < Genome.eatNeed) // change to empirical number?
+                return AdaptiveState.PreyFoodLack;
+        }
+        else
+        {
+            int predatorCount = ga.world.getPredators().Count;
+            if (predatorCount == 0)
+                return AdaptiveState.None; // or AdaptiveState.EcosystemCollapse
+
+            float preyPerPredator = (float)ga.totalFoodForPredator / predatorCount;
+            if (preyPerPredator < Genome.eatNeed) // change to empirical number?
+                return AdaptiveState.PredatorFoodLack;
+        }
+
+        // --- TEMPERATURE (median in radius) ---
+        int radius = SightRange; // temporary decision
+
+        List<Tile> tiles = CurrentTile.GetRadius(radius);
+        List<float> temps = new List<float>(tiles.Count);
+
+        var env = WorldController.Instance.World.Environment;
+
+        foreach (var t in tiles)
+        {
+            temps.Add(env.GetTemperature(t.X, t.Y));
+        }
+
+        // protection from empty list
+        if (temps.Count == 0)
+            return AdaptiveState.None;
+
+        // median
+        temps.Sort();
+        float medianTemp;
+
+        int mid = temps.Count / 2;
+        if (temps.Count % 2 == 0)
+            medianTemp = (temps[mid - 1] + temps[mid]) * 0.5f;
+        else
+            medianTemp = temps[mid];
+
+        // comparison with TempResistance
+        float diff = medianTemp - Genome.tempResist;
+
+        if (Mathf.Abs(diff) > Mathf.Abs(Genome.tempResist) * 0.4f)
+        {
+            return diff > 0
+                ? AdaptiveState.TemperatureTooHigh
+                : AdaptiveState.TemperatureTooLow;
+        }
+
+        return AdaptiveState.None;
+    }
+
+    /// <summary>
+    /// Methods for adapting animal to changes using GA.
+    /// </summary>
+    protected void AdaptPreyFoodLack()
+    {
+        //SightRange *= 2;
+    }
+
+    protected void AdaptPredatorFoodLack()
+    {
+        //Speed *= 1.1f;
+    }
+
+    protected void AdaptHeat()
+    {
+        //Speed *= 0.9f;
+    }
+
+    protected void AdaptCold()
+    {
+        //Hunger -= 0.05f * deltaTime;
+    }
+
+    /// <summary>
+    /// Loosing HP because of needs = 0.
+    /// </summary>
+    /// <param name="deltaTime">Time between last frame.</param>
+    protected void UpdateHP(float deltaTime)
+    {
+        float damagePerSecond = 0f;
+
+        // damage if hunger = 0
+        if (Hunger <= 0f)
+        {
+            damagePerSecond += 1f;
+        }
+
+        // damage if thirst = 0
+        if (Thirst <= 0f)
+        {
+            damagePerSecond += 2f; // thirsty usually feels worse
+        }
+
+        if (damagePerSecond > 0f)
+        {
+            HP -= damagePerSecond * deltaTime;
+            HP = Mathf.Clamp(HP, 0f, MaxHP);
+        }
     }
 
     /// <summary>
@@ -177,6 +336,12 @@ public abstract class Animal
     public abstract void Update(float deltaTime);
 
     /// <summary>
+    /// Abstract method for Genetic Algorithm.
+    /// </summary>
+    /// <param name="deltaTime">Time between last frame.</param>
+    public abstract void UpdateDoGA(float deltaTime);
+
+    /// <summary>
     /// Movement function, handles pathfinding and move percentage.
     /// </summary>
     /// <param name="deltaTime">Time between last frame.</param>
@@ -192,7 +357,7 @@ public abstract class Animal
                Drown();
             }
 
-            int drownStart = AnimalType == AnimalType.Prey ? 4 : 10; //foxes swim better than rabbits.
+            int drownStart = AnimalType == AnimalType.Prey ? 4 : 10; // foxes swim better than rabbits.
 
             if (swimDistance > drownStart)
             {

@@ -21,11 +21,14 @@ public class Prey : Animal
     /// <returns>Boolean if it should die.</returns>
     public override bool ShouldDie()
     {
-        if (Hunger < 0f && CurrentState != AnimalState.Eating || Thirst < 0f && CurrentState != AnimalState.Drinking || IsEaten)
-        {
+        if (HP <= 0f || IsEaten)
             return true;
-        }
         return false;
+        //if (Hunger < 0f && CurrentState != AnimalState.Eating || Thirst < 0f && CurrentState != AnimalState.Drinking || IsEaten)
+        //{
+        //    return true;
+        //}
+        //return false;
     }
 
     /// <summary>
@@ -60,8 +63,9 @@ public class Prey : Animal
     /// <param name="deltaTime">Time between last frame</param>
     public override void Update(float deltaTime)
     {
-        Hunger -= (deltaTime * TimeController.Instance.GetTimesADayMultiplier(1.5f));
-        Thirst -= (deltaTime * TimeController.Instance.GetTimesADayMultiplier(2f));
+        Hunger -= (deltaTime * TimeController.Instance.GetTimesADayMultiplier(this.Genome.hungerDecreasingSpeed));
+        Thirst -= (deltaTime * TimeController.Instance.GetTimesADayMultiplier(this.Genome.thirstDecreasingSpeed));
+        UpdateHP(deltaTime);
         timeSinceLastBreeded += deltaTime;
         UpdateAge(deltaTime);
         UpdateDoMovement(deltaTime);
@@ -122,6 +126,38 @@ public class Prey : Animal
         {
             OnAnimalChangedCallback(this);
         }
+
+        // adapting to changing environment via GA
+        UpdateAdaptiveState(deltaTime);
+
+        switch (CurrentAdaptiveState)
+        {
+            case AdaptiveState.PreyFoodLack:
+                AdaptPreyFoodLack();
+                break;
+
+            case AdaptiveState.PredatorFoodLack:
+                AdaptPredatorFoodLack();
+                break;
+
+            case AdaptiveState.TemperatureTooHigh:
+                AdaptHeat();
+                break;
+
+            case AdaptiveState.TemperatureTooLow:
+                AdaptCold();
+                break;
+        }
+    }
+
+    /// <summary>
+    /// I am adapting to environment
+    /// </summary>
+    /// <param name="deltaTime">Time between last frame.</param>
+    override
+    public void UpdateDoGA(float deltaTime)
+    {
+        //DoGA();
     }
 
     /// <summary>
@@ -362,11 +398,11 @@ public class Prey : Animal
 
     public override void GiveBirth()
     {
-        int litterSize = UnityEngine.Random.Range(4, 9); // should be: genome.fertility
+        int litterSize = UnityEngine.Random.Range(4, 9); // myTODO: should be genome.fertility
 
         for (int i = 0; i < litterSize; i++)
         {
-            Prey child = AnimalManager.SpawnPrey(CurrentTile, this, Genome.Inheritance(this.Genome)); // здесь метод передачи генома от родителя ребенку
+            Prey child = AnimalManager.SpawnPrey(CurrentTile, this, Genome.Inheritance(this.Genome)); // myTODO: здесь метод передачи генома от родителя ребенку
             child.CurrentState = AnimalState.FollowingParent;
         }
 
@@ -374,6 +410,12 @@ public class Prey : Animal
 
         pregnacy = null;
         timeSinceLastBreeded = 0f;
+
+        // counter for fitness
+        // myTODO: else think about father - he has no counter (before ClearPartner in Animal.cs (482))
+        // this.ChildrenCount += litterSize;
+        // getPartner().ChildrenCount += litterSize;
+        TotalChildrenCount += litterSize;
     }
 
     override

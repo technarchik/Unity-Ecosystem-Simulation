@@ -25,12 +25,12 @@ public class AnimalEditorWindow : EditorWindow
         {
             if (GUILayout.Button("Spawn Prey"))
             {
-                world.AnimalManager.SpawnPrey(world.GetTileAt(50, 50), null, Genome.CreateGenome());
+                world.AnimalManager.SpawnPrey(world.GetTileAt(50, 50), null, Genome.CreateGenome(AnimalType.Prey));
             }
 
             if (GUILayout.Button("Spawn Predator"))
             {
-                world.AnimalManager.SpawnPredator(world.GetTileAt(50, 50), null, Genome.CreateGenome());
+                world.AnimalManager.SpawnPredator(world.GetTileAt(50, 50), null, Genome.CreateGenome(AnimalType.Predator));
             }
 
             if (GUILayout.Button("Set Currently Selected To Hungry"))
