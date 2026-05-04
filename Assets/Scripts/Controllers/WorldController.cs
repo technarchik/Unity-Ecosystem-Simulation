@@ -16,7 +16,7 @@ public class WorldController : MonoBehaviour
     public AnimalSpriteController AnimalSpriteController;
     public EventLogController EventLogController;
     private Process graphWindow;
-    public GA ga;
+    public GAManager ga;
 
     private EnvironmentDebugView debugView; // EnvSystem: DebugView
     private bool debugViewEnabled = false;
@@ -67,7 +67,7 @@ public class WorldController : MonoBehaviour
     private void InitialiseTiles()
     {
         World = new World(Width, Height);
-        ga = new GA(World); // GASystem: init of GA object
+        ga = new GAManager(World); // GASystem: init of GA object
 
         World.AnimalManager.RegisterOnAnimalCreatedCallback(AnimalSpriteController.OnAnimalCreated);
         World.AnimalManager.RegisterOnAnimalDestroyedCallback(AnimalSpriteController.OnAnimalDestroyed);

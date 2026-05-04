@@ -52,6 +52,7 @@ public class Predator : Animal
     {
         Hunger -= (deltaTime * TimeController.Instance.GetTimesADayMultiplier(this.Genome.hungerDecreasingSpeed));
         Thirst -= (deltaTime * TimeController.Instance.GetTimesADayMultiplier(this.Genome.thirstDecreasingSpeed));
+        //Stamina -= (deltaTime * TimeController.Instance.GetTimesADayMultiplier());
         UpdateHP(deltaTime);
         timeSinceLastBreeded += deltaTime;
         UpdateAge(deltaTime);
@@ -115,6 +116,8 @@ public class Predator : Animal
             OnAnimalChangedCallback(this);
         }
 
+        // TEST
+        UpdateTemperatureResist(deltaTime);
 
         // adapting to changing environment via GA
         UpdateAdaptiveState(deltaTime);
@@ -321,7 +324,7 @@ public class Predator : Animal
         }
     }
 
-    override
+   override
    public void setChild()
     {
         this.TimeAlive = 0;

@@ -6,7 +6,7 @@ public class Genome
 {
     // moving
     public float speed;
-    public float stamina;
+    public float maxStamina;
     public int sightRange;
 
     // surviving
@@ -34,6 +34,7 @@ public class Genome
         if (type == AnimalType.Prey)
         {
             genome.speed = Random.Range(3f, 10f);
+            genome.maxStamina = Random.Range(1f, 3f);
             genome.sightRange = Random.Range(5, 12);
 
             genome.hungerDecreasingSpeed = Random.Range(0.7f, 1.5f);
@@ -52,6 +53,7 @@ public class Genome
         else // Predator
         {
             genome.speed = Random.Range(2f, 7f);
+            genome.maxStamina = Random.Range(2f, 5f);
             genome.sightRange = Random.Range(4, 10);
 
             genome.hungerDecreasingSpeed = Random.Range(1.0f, 2.0f);

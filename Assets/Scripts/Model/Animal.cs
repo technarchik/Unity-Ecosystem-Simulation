@@ -1,8 +1,9 @@
+using Assets.Scripts.Model;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
-using Assets.Scripts.Model;
+using UnityEngine.SocialPlatforms;
 
 public enum AnimalType
 {
@@ -89,6 +90,7 @@ public abstract class Animal
     public Gender AnimalSex { get; protected set;}
     
     public float Speed { get; protected set; }
+    public float Stamina { get; protected set; }
     public int SightRange { get; protected set; }
     public Animal Mother { get; protected set; }
     private float movePercentage;
@@ -96,7 +98,9 @@ public abstract class Animal
     
     // --- for adaptive system ---
     private float adaptiveCheckTimer;
-    private float adaptiveCheckInterval = 2f;
+    private float adaptiveCheckInterval = 0.2f;
+
+    protected GeneticAlgorithm geneticAlgorithm;
 
     private Queue<Tile> path;
 
@@ -114,6 +118,7 @@ public abstract class Animal
         Hunger = 1f;
         Thirst = 1f;
         HP = MaxHP;
+        Stamina = genome.maxStamina;
 
         Speed = genome.speed;
         SightRange = genome.sightRange;
@@ -131,6 +136,9 @@ public abstract class Animal
         AnimalSex = gender;
         timeSinceLastBreeded = 0;
         Mother = mother;
+
+        geneticAlgorithm = new GeneticAlgorithm();
+        geneticAlgorithm.Initialize(this);
     }
 
     /// <summary>
@@ -150,33 +158,43 @@ public abstract class Animal
     }
 
     /// <summary>
+    /// TESTING TEMPERATURE RESIST ADAPTING.
+    /// </summary>
+    /// <param name="deltaTime">Time between last frame.</param>
+    protected void UpdateTemperatureResist(float deltaTime) //////////////////////////////////////////////////
+    {
+        var ga = WorldController.Instance.ga;
+        ga.DoGA(this);
+    }
+
+    /// <summary>
     /// Changing animal's AdaptiveState.
     /// </summary>
     private AdaptiveState EvaluateAdaptiveState()
     {
         var ga = WorldController.Instance.ga;
 
-        // --- FOOD ---
-        if (AnimalType == AnimalType.Prey)
-        {
-            int preyCount = ga.world.getPrey().Count;
-            if (preyCount == 0)
-                return AdaptiveState.None; // or AdaptiveState.EcosystemCollapse
+        //// --- FOOD ---
+        //if (AnimalType == AnimalType.Prey)
+        //{
+        //    int preyCount = ga.world.getPrey().Count;
+        //    if (preyCount == 0)
+        //        return AdaptiveState.None; // or AdaptiveState.EcosystemCollapse
 
-            float foodPerPrey = (float)ga.totalFoodForPrey / preyCount;
-            if (foodPerPrey < Genome.eatNeed) // change to empirical number?
-                return AdaptiveState.PreyFoodLack;
-        }
-        else
-        {
-            int predatorCount = ga.world.getPredators().Count;
-            if (predatorCount == 0)
-                return AdaptiveState.None; // or AdaptiveState.EcosystemCollapse
+        //    float foodPerPrey = (float)ga.totalFoodForPrey / preyCount;
+        //    if (foodPerPrey < Genome.eatNeed) // change to empirical number?
+        //        return AdaptiveState.PreyFoodLack;
+        //}
+        //else
+        //{
+        //    int predatorCount = ga.world.getPredators().Count;
+        //    if (predatorCount == 0)
+        //        return AdaptiveState.None; // or AdaptiveState.EcosystemCollapse
 
-            float preyPerPredator = (float)ga.totalFoodForPredator / predatorCount;
-            if (preyPerPredator < Genome.eatNeed) // change to empirical number?
-                return AdaptiveState.PredatorFoodLack;
-        }
+        //    float preyPerPredator = (float)ga.totalFoodForPredator / predatorCount;
+        //    if (preyPerPredator < Genome.eatNeed) // change to empirical number?
+        //        return AdaptiveState.PredatorFoodLack;
+        //}
 
         // --- TEMPERATURE (median in radius) ---
         int radius = SightRange; // temporary decision

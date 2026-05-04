@@ -127,6 +127,9 @@ public class Prey : Animal
             OnAnimalChangedCallback(this);
         }
 
+        // TEST
+        UpdateTemperatureResist(deltaTime);
+
         // adapting to changing environment via GA
         UpdateAdaptiveState(deltaTime);
 
