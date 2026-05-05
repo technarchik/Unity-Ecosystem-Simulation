@@ -117,40 +117,41 @@ public class Predator : Animal
         }
 
         // TEST
-        UpdateTemperatureResist(deltaTime);
+        //UpdateTemperatureResist(deltaTime);
+        UpdateDoGA(deltaTime);
 
         // adapting to changing environment via GA
-        UpdateAdaptiveState(deltaTime);
+        //UpdateAdaptiveState(deltaTime);
 
-        switch (CurrentAdaptiveState)
-        {
-            case AdaptiveState.PreyFoodLack:
-                AdaptPreyFoodLack();
-                break;
+        //switch (CurrentAdaptiveState)
+        //{
+        //    case AdaptiveState.PreyFoodLack:
+        //        AdaptPreyFoodLack();
+        //        break;
 
-            case AdaptiveState.PredatorFoodLack:
-                AdaptPredatorFoodLack();
-                break;
+        //    case AdaptiveState.PredatorFoodLack:
+        //        AdaptPredatorFoodLack();
+        //        break;
 
-            case AdaptiveState.TemperatureTooHigh:
-                AdaptHeat();
-                break;
+        //    case AdaptiveState.TemperatureTooHigh:
+        //        AdaptHeat();
+        //        break;
 
-            case AdaptiveState.TemperatureTooLow:
-                AdaptCold();
-                break;
-        }
+        //    case AdaptiveState.TemperatureTooLow:
+        //        AdaptCold();
+        //        break;
+        //}
     }
 
     /// <summary>
     /// I am adapting to environment
     /// </summary>
     /// <param name="deltaTime">Time between last frame.</param>
-    override
-    public void UpdateDoGA(float deltaTime)
-    {
-        //DoGA();
-    }
+    //override
+    //public void UpdateDoGA(float deltaTime)
+    //{
+    //    //DoGA();
+    //}
 
     // TODO: All of this seek food stuff needs to add functionality for:
     //       - Another predator kills the prey (idk how to do this, might need some flag to be set on prey a bool BeingChased?)

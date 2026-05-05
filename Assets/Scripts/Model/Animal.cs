@@ -53,7 +53,10 @@ public enum AdaptiveState // states for activating GA
 
     // environment stress
     TemperatureTooHigh,
-    TemperatureTooLow
+    TemperatureTooLow,
+
+    EmptyTemp,
+    TempOK
 }
 
 public abstract class Animal
@@ -154,7 +157,7 @@ public abstract class Animal
 
         adaptiveCheckTimer = 0f;
 
-        CurrentAdaptiveState = EvaluateAdaptiveState();
+        //CurrentAdaptiveState = EvaluateAdaptiveState();
     }
 
     /// <summary>
@@ -357,7 +360,13 @@ public abstract class Animal
     /// Abstract method for Genetic Algorithm.
     /// </summary>
     /// <param name="deltaTime">Time between last frame.</param>
-    public abstract void UpdateDoGA(float deltaTime);
+    public void UpdateDoGA(float deltaTime)
+    {
+        //var best = geneticAlgorithm.Evolve(this);
+        this.CurrentAdaptiveState = geneticAlgorithm.TemperatureTest(this);
+        //ApplyDecision(best);
+    }
+    //public abstract void UpdateDoGA(float deltaTime);
 
     /// <summary>
     /// Movement function, handles pathfinding and move percentage.

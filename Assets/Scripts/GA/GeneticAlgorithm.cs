@@ -12,6 +12,67 @@ public class GeneticAlgorithm
 
     private DecisionGenome bestGenome;
 
+    public AdaptiveState TemperatureTest(Animal animal)
+    {
+        // берем температуру окружающую (радиус)
+        // если высокая - возвращаем high
+        // если низкая - возвращаем low
+
+        // --- TEMPERATURE (median in radius) ---
+        int radius = animal.SightRange; // temporary decision
+
+        List<Tile> tiles = animal.CurrentTile.GetRadius(radius);
+        List<float> temps = new List<float>(tiles.Count);
+
+        var env = WorldController.Instance.World.Environment;
+
+        foreach (var t in tiles)
+        {
+            temps.Add(env.GetTemperature(t.X, t.Y));
+        }
+
+        // protection from empty list
+        if (temps.Count == 0)
+            return AdaptiveState.EmptyTemp;
+
+        // median
+        temps.Sort();
+        float medianTemp;
+
+        int mid = temps.Count / 2;
+        if (temps.Count % 2 == 0)
+            medianTemp = (temps[mid - 1] + temps[mid]) * 0.5f;
+        else
+            medianTemp = temps[mid];
+
+        if (animal.ID == 0 && animal.AnimalType == AnimalType.Prey)
+            Debug.Log("MedianTemp: " + medianTemp + "\n");
+
+        // comparison with TempResistance
+        float diff = medianTemp - animal.Genome.tempResist;
+
+        if (Mathf.Abs(diff) > 5f /*Mathf.Abs(diff) > Mathf.Abs(animal.Genome.tempResist) * 0.4f*/)
+        {
+            //return diff > 0
+            //    ? AdaptiveState.TemperatureTooHigh
+            //    : AdaptiveState.TemperatureTooLow;
+            if (diff > 0)
+            {
+                if (animal.ID == 0 && animal.AnimalType == AnimalType.Prey)
+                    Debug.Log(animal.ID + $" {diff} : TemperatureTooHigh");
+                return AdaptiveState.TemperatureTooHigh;
+            }
+            else if (diff < 0)
+            {
+                if (animal.ID == 0 && animal.AnimalType == AnimalType.Prey)
+                    Debug.Log(animal.ID + $" {diff} : TemperatureTooLow");
+                return AdaptiveState.TemperatureTooLow;
+            }
+        }
+
+        return AdaptiveState.TempOK;
+    }
+
     public void Initialize(Animal owner)
     {
         population = new List<DecisionGenome>();

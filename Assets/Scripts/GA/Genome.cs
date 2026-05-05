@@ -45,7 +45,7 @@ public class Genome
 
             genome.swimAbility = Random.Range(0.2f, 0.6f);
 
-            genome.tempResist = Random.Range(0.3f, 0.7f);
+            genome.tempResist = Random.Range(0.1f, 20f);
 
             genome.fatSave = Random.Range(0.5f, 1.0f);
             genome.eatNeed = Random.Range(0.3f, 0.6f);
@@ -64,7 +64,7 @@ public class Genome
 
             genome.swimAbility = Random.Range(0.4f, 0.9f);     // better swimming
 
-            genome.tempResist = Random.Range(0.2f, 0.8f);
+            genome.tempResist = Random.Range(0.1f, 20f);
 
             genome.fatSave = Random.Range(0.2f, 0.7f);
             genome.eatNeed = Random.Range(0.7f, 1.2f);

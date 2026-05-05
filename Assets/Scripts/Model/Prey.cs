@@ -128,40 +128,49 @@ public class Prey : Animal
         }
 
         // TEST
-        UpdateTemperatureResist(deltaTime);
+        //UpdateTemperatureResist(deltaTime);
+        UpdateDoGA(deltaTime);
+        ShowState(deltaTime);
+        
 
         // adapting to changing environment via GA
-        UpdateAdaptiveState(deltaTime);
+        //UpdateAdaptiveState(deltaTime);
 
-        switch (CurrentAdaptiveState)
-        {
-            case AdaptiveState.PreyFoodLack:
-                AdaptPreyFoodLack();
-                break;
+        //switch (CurrentAdaptiveState)
+        //{
+        //    case AdaptiveState.PreyFoodLack:
+        //        AdaptPreyFoodLack();
+        //        break;
 
-            case AdaptiveState.PredatorFoodLack:
-                AdaptPredatorFoodLack();
-                break;
+        //    case AdaptiveState.PredatorFoodLack:
+        //        AdaptPredatorFoodLack();
+        //        break;
 
-            case AdaptiveState.TemperatureTooHigh:
-                AdaptHeat();
-                break;
+        //    case AdaptiveState.TemperatureTooHigh:
+        //        AdaptHeat();
+        //        break;
 
-            case AdaptiveState.TemperatureTooLow:
-                AdaptCold();
-                break;
-        }
+        //    case AdaptiveState.TemperatureTooLow:
+        //        AdaptCold();
+        //        break;
+        //}
+    }
+
+    public void ShowState(float deltaTime)
+    {
+        if (this.ID == 0 && this.AnimalType == AnimalType.Prey)
+            Debug.Log("—Œ—“ŒﬂÕ»≈: " + AnimalType + " - " + ID + " - " + CurrentAdaptiveState + "\n");
     }
 
     /// <summary>
     /// I am adapting to environment
     /// </summary>
     /// <param name="deltaTime">Time between last frame.</param>
-    override
-    public void UpdateDoGA(float deltaTime)
-    {
-        //DoGA();
-    }
+    //override
+    //public void UpdateDoGA(float deltaTime)
+    //{
+    //    //DoGA();
+    //}
 
     /// <summary>
     /// I am hungry however I do not see food, I am moving to a tile to seek food,

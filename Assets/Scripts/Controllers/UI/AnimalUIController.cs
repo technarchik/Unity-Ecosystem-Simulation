@@ -57,7 +57,7 @@ public class AnimalUIController : MonoBehaviour
             HungerSlider.value = currentlySelected.Hunger;
             ThirstSlider.value = currentlySelected.Thirst;
             StateText.text = $"Current State: {currentlySelected.CurrentState}";
-            AdaptiveText.text = $"Adaptive: {currentlySelected.CurrentAdaptiveState}";
+            AdaptiveText.text = $"Adaptive: {currentlySelected.CurrentAdaptiveState} : {currentlySelected.Genome.tempResist:F1}";
             AgeText.text = $"Age: {currentlySelected.Age}";
             AgeStageText.text = $"Age Stage: {currentlySelected.lifeStage}";
             GenderText.text = $"Gender: {currentlySelected.AnimalSex}";
