@@ -155,22 +155,22 @@ public class EnvironmentSystem
                     float dist = Vector2.Distance(new Vector2(x, y), s.position);
 
                     // fading
-                    float influence = Mathf.Exp(-dist * 0.1f);
+                    float influence = Mathf.Exp(-dist * 0.05f);
 
                     temp += (s.baseTemperature + s.currentOffset) * influence;
                 }
 
                 // a little Perlin-like variation
-                float noise = Mathf.PerlinNoise(x * 0.05f, y * 0.05f);
-                temp += (noise - 0.5f) * 5f;
+                float noise = Mathf.PerlinNoise(x * 0.02f, y * 0.02f);
+                temp += (noise - 0.5f) * 2f;
 
                 // impact of tile-type
                 Tile tile = world.GetTileAt(x, y);
 
                 if (tile.Type == TileType.Water)
-                    temp -= 3f;
+                    temp -= 5f;
                 else if (tile.Type == TileType.Sand)
-                    temp += 2f;
+                    temp += 5f;
 
                 temperatureMap[x, y] = Mathf.Clamp(temp, -60f, 60f);
             }
@@ -191,7 +191,7 @@ public class EnvironmentSystem
                 UnityEngine.Random.Range(0, height)
             );
 
-            s.baseTemperature = UnityEngine.Random.Range(0f, 10f);
+            s.baseTemperature = UnityEngine.Random.Range(0f, 5f);
             s.currentOffset = 0f;
 
             sources.Add(s);
@@ -214,9 +214,9 @@ public class EnvironmentSystem
                 float delta;
 
                 // variation of conditions
-                if (roll < 0.2f)
+                if (roll < 0.5f)
                     delta = UnityEngine.Random.Range(-5f, 5f); // easy
-                else if (roll < 0.4f)
+                else if (roll < 0.7f)
                     delta = UnityEngine.Random.Range(-10f, 10f); // medium
                 else
                     delta = UnityEngine.Random.Range(-20f, 20f); // hard

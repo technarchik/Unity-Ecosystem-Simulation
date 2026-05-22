@@ -52,22 +52,39 @@ public class Genome
         }
         else // Predator
         {
-            genome.speed = Random.Range(2f, 7f);
-            genome.maxStamina = Random.Range(2f, 5f);
-            genome.sightRange = Random.Range(4, 10);
+            genome.speed = Random.Range(3f, 10f);
+            genome.maxStamina = Random.Range(1f, 3f);
+            genome.sightRange = Random.Range(5, 12);
 
-            genome.hungerDecreasingSpeed = Random.Range(1.0f, 2.0f);
-            genome.thirstDecreasingSpeed = Random.Range(0.8f, 1.5f);
+            genome.hungerDecreasingSpeed = Random.Range(0.7f, 1.5f);
+            genome.thirstDecreasingSpeed = Random.Range(0.7f, 1.5f);
 
-            genome.breedingCooldownMultiplyer = Random.Range(1.0f, 2.0f);
+            genome.breedingCooldownMultiplyer = Random.Range(0.5f, 1.2f);
             genome.fertility = Random.Range(2, 4);             // small litter
 
-            genome.swimAbility = Random.Range(0.4f, 0.9f);     // better swimming
+            genome.swimAbility = Random.Range(0.2f, 0.6f);
 
             genome.tempResist = Random.Range(0.1f, 20f);
 
-            genome.fatSave = Random.Range(0.2f, 0.7f);
-            genome.eatNeed = Random.Range(0.7f, 1.2f);
+            genome.fatSave = Random.Range(0.5f, 1.0f);
+            genome.eatNeed = Random.Range(0.3f, 0.6f);
+
+            //genome.speed = Random.Range(2f, 7f);
+            //genome.maxStamina = Random.Range(2f, 5f);
+            //genome.sightRange = Random.Range(4, 10);
+
+            //genome.hungerDecreasingSpeed = Random.Range(1.0f, 2.0f);
+            //genome.thirstDecreasingSpeed = Random.Range(0.8f, 1.5f);
+
+            //genome.breedingCooldownMultiplyer = Random.Range(1.0f, 2.0f);
+            //genome.fertility = Random.Range(2, 4);           // small litter
+
+            //genome.swimAbility = Random.Range(0.4f, 0.9f);   // better swimming
+
+            //genome.tempResist = Random.Range(0.1f, 20f);
+
+            //genome.fatSave = Random.Range(0.2f, 0.7f);
+            //genome.eatNeed = Random.Range(0.7f, 1.2f);
         }
 
         return genome;

@@ -4,13 +4,15 @@ using UnityEngine;
 
 public class GeneticAlgorithm
 {
-    private List<DecisionGenome> population;
+    private List<DecisionGenomePrey> populationPrey;
+    private List<DecisionGenomePredator> populationPredator;
 
     private int populationSize = 20;
     private float mutationRate = 0.1f;
     private float mutationStrength = 0.2f;
 
-    private DecisionGenome bestGenome;
+    private DecisionGenomePrey bestGenomePrey;
+    private DecisionGenomePredator bestGenomePredator;
 
     public AdaptiveState TemperatureTest(Animal animal)
     {
@@ -75,38 +77,63 @@ public class GeneticAlgorithm
 
     public void Initialize(Animal owner)
     {
-        population = new List<DecisionGenome>();
+        populationPrey = new List<DecisionGenomePrey>();
+        populationPredator = new List<DecisionGenomePredator>();
 
         for (int i = 0; i < populationSize; i++)
         {
-            population.Add(DecisionGenome.Random());
+            populationPrey.Add(DecisionGenomePrey.Random());
+            populationPredator.Add(DecisionGenomePredator.Random());
         }
     }
 
-    public DecisionGenome Evolve(Animal animal)
+    public DecisionGenomePrey Evolve(Prey animal)
     {
-        EvaluatePopulation(animal);
+        EvaluatePopulationPrey(animal);
 
-        var selected = Selection();
+        var selected = SelectionPrey();
 
         var nextGen = Reproduce(selected);
 
-        population = nextGen;
+        populationPrey = nextGen;
 
-        bestGenome = population.OrderByDescending(g => g.fitness).First();
+        bestGenomePrey = populationPrey.OrderByDescending(g => g.fitness).First();
 
-        return bestGenome;
+        return bestGenomePrey;
     }
 
-    private void EvaluatePopulation(Animal a)
+    public DecisionGenomePredator Evolve(Predator animal)
     {
-        foreach (var g in population)
+        EvaluatePopulationPredator(animal);
+
+        var selected = SelectionPredator();
+
+        var nextGen = Reproduce(selected);
+
+        populationPredator = nextGen;
+
+        bestGenomePredator = populationPredator.OrderByDescending(g => g.fitness).First();
+
+        return bestGenomePredator;
+    }
+
+    private void EvaluatePopulationPrey(Animal a)
+    {
+        foreach (var g in populationPrey)
         {
-            g.fitness = CalculateFitness(g, a);
+            g.fitness = CalculateFitnessPrey(g, a);
         }
     }
 
-    private float CalculateFitness(DecisionGenome g, Animal a)
+    private void EvaluatePopulationPredator(Animal a)
+    {
+        foreach (var g in populationPredator)
+        {
+            g.fitness = CalculateFitnessPredator(g, a);
+        }
+    }
+
+    private float CalculateFitnessPrey(DecisionGenomePrey g, Animal a)
     {
         float survival = a.HP;
         float hungerPenalty = 1f - a.Hunger;
@@ -119,29 +146,41 @@ public class GeneticAlgorithm
             return survival
                 - hungerPenalty * g.hungerWeight * 10f
                 - thirstPenalty * g.thirstWeight * 10f
-                + reproduction * g.reproductionWeight * 5f;
+                + reproduction * g.fearWeight * 5f;
         }
-        else // Predator
+        else return 0;
+    }
+
+    private float CalculateFitnessPredator(DecisionGenomePredator g, Animal a)
+    {
+        float survival = a.HP;
+        float hungerPenalty = 1f - a.Hunger;
+        float thirstPenalty = 1f - a.Thirst;
+
+        float reproduction = a.TotalChildrenCount;
+
+        if (a.AnimalType == AnimalType.Predator)
         {
             return survival
                 + a.Hunger * g.hungerWeight * 5f
-                + reproduction * g.reproductionWeight * 8f;
+                + reproduction;
         }
+        else return 0;
     }
 
-    private List<DecisionGenome> Selection()
+    private List<DecisionGenomePrey> SelectionPrey()
     {
-        List<DecisionGenome> selected = new List<DecisionGenome>();
+        List<DecisionGenomePrey> selected = new List<DecisionGenomePrey>();
 
         int tournamentSize = 3;
 
         for (int i = 0; i < populationSize; i++)
         {
-            DecisionGenome best = null;
+            DecisionGenomePrey best = null;
 
             for (int j = 0; j < tournamentSize; j++)
             {
-                var candidate = population[Random.Range(0, population.Count)];
+                var candidate = populationPrey[Random.Range(0, populationPrey.Count)];
 
                 if (best == null || candidate.fitness > best.fitness)
                     best = candidate;
@@ -153,9 +192,33 @@ public class GeneticAlgorithm
         return selected;
     }
 
-    private List<DecisionGenome> Reproduce(List<DecisionGenome> selected)
+    private List<DecisionGenomePredator> SelectionPredator()
     {
-        List<DecisionGenome> nextGen = new List<DecisionGenome>();
+        List<DecisionGenomePredator> selected = new List<DecisionGenomePredator>();
+
+        int tournamentSize = 3;
+
+        for (int i = 0; i < populationSize; i++)
+        {
+            DecisionGenomePredator best = null;
+
+            for (int j = 0; j < tournamentSize; j++)
+            {
+                var candidate = populationPredator[Random.Range(0, populationPredator.Count)];
+
+                if (best == null || candidate.fitness > best.fitness)
+                    best = candidate;
+            }
+
+            selected.Add(best);
+        }
+
+        return selected;
+    }
+
+    private List<DecisionGenomePrey> Reproduce(List<DecisionGenomePrey> selected)
+    {
+        List<DecisionGenomePrey> nextGen = new List<DecisionGenomePrey>();
 
         for (int i = 0; i < populationSize; i++)
         {
@@ -172,18 +235,50 @@ public class GeneticAlgorithm
         return nextGen;
     }
 
-    private DecisionGenome Crossover(DecisionGenome a, DecisionGenome b)
+    private List<DecisionGenomePredator> Reproduce(List<DecisionGenomePredator> selected)
     {
-        return new DecisionGenome
+        List<DecisionGenomePredator> nextGen = new List<DecisionGenomePredator>();
+
+        for (int i = 0; i < populationSize; i++)
+        {
+            var parent1 = selected[Random.Range(0, selected.Count)];
+            var parent2 = selected[Random.Range(0, selected.Count)];
+
+            var child = Crossover(parent1, parent2);
+
+            Mutate(child);
+
+            nextGen.Add(child);
+        }
+
+        return nextGen;
+    }
+
+    private DecisionGenomePrey Crossover(DecisionGenomePrey a, DecisionGenomePrey b)
+    {
+        return new DecisionGenomePrey
         {
             hungerWeight = Random.value < 0.5f ? a.hungerWeight : b.hungerWeight,
             thirstWeight = Random.value < 0.5f ? a.thirstWeight : b.thirstWeight,
-            reproductionWeight = Random.value < 0.5f ? a.reproductionWeight : b.reproductionWeight,
+            fearWeight = Random.value < 0.5f ? a.fearWeight : b.fearWeight,
+            hideSeekingWeight = Random.value < 0.5f ? a.hideSeekingWeight : b.hideSeekingWeight,
+            riskTolerance = Random.value < 0.5f ? a.riskTolerance : b.riskTolerance,
             explorationWeight = Random.value < 0.5f ? a.explorationWeight : b.explorationWeight
         };
     }
 
-    private void Mutate(DecisionGenome g)
+    private DecisionGenomePredator Crossover(DecisionGenomePredator a, DecisionGenomePredator b)
+    {
+        return new DecisionGenomePredator
+        {
+            hungerWeight = Random.value < 0.5f ? a.hungerWeight : b.hungerWeight,
+            thirstWeight = Random.value < 0.5f ? a.thirstWeight : b.thirstWeight,
+            aggressionWeight = Random.value < 0.5f ? a.aggressionWeight : b.aggressionWeight,
+            timeFollowingWeight = Random.value < 0.5f ? a.timeFollowingWeight : b.timeFollowingWeight
+        };
+    }
+
+    private void Mutate(DecisionGenomePrey g)
     {
         if (Random.value < mutationRate)
             g.hungerWeight += Random.Range(-mutationStrength, mutationStrength);
@@ -192,7 +287,13 @@ public class GeneticAlgorithm
             g.thirstWeight += Random.Range(-mutationStrength, mutationStrength);
 
         if (Random.value < mutationRate)
-            g.reproductionWeight += Random.Range(-mutationStrength, mutationStrength);
+            g.fearWeight += Random.Range(-mutationStrength, mutationStrength);
+
+        if (Random.value < mutationRate)
+            g.hideSeekingWeight += Random.Range(-mutationStrength, mutationStrength);
+
+        if (Random.value < mutationRate)
+            g.riskTolerance += Random.Range(-mutationStrength, mutationStrength);
 
         if (Random.value < mutationRate)
             g.explorationWeight += Random.Range(-mutationStrength, mutationStrength);
@@ -200,11 +301,37 @@ public class GeneticAlgorithm
         ClampGenome(g);
     }
 
-    private void ClampGenome(DecisionGenome g)
+    private void Mutate(DecisionGenomePredator g)
+    {
+        if (Random.value < mutationRate)
+            g.hungerWeight += Random.Range(-mutationStrength, mutationStrength);
+
+        if (Random.value < mutationRate)
+            g.thirstWeight += Random.Range(-mutationStrength, mutationStrength);
+
+        if (Random.value < mutationRate)
+            g.aggressionWeight += Random.Range(-mutationStrength, mutationStrength);
+
+        if (Random.value < mutationRate)
+            g.timeFollowingWeight += Random.Range(-mutationStrength, mutationStrength);
+
+        ClampGenome(g);
+    }
+
+    private void ClampGenome(DecisionGenomePrey g)
     {
         g.hungerWeight = Mathf.Clamp01(g.hungerWeight);
         g.thirstWeight = Mathf.Clamp01(g.thirstWeight);
-        g.reproductionWeight = Mathf.Clamp01(g.reproductionWeight);
+        g.fearWeight = Mathf.Clamp01(g.fearWeight);
+        g.hideSeekingWeight = Mathf.Clamp01(g.hideSeekingWeight);
+        g.riskTolerance = Mathf.Clamp01(g.riskTolerance);
         g.explorationWeight = Mathf.Clamp01(g.explorationWeight);
+    }
+    private void ClampGenome(DecisionGenomePredator g)
+    {
+        g.hungerWeight = Mathf.Clamp01(g.hungerWeight);
+        g.thirstWeight = Mathf.Clamp01(g.thirstWeight);
+        g.aggressionWeight = Mathf.Clamp01(g.aggressionWeight);
+        g.timeFollowingWeight = Mathf.Clamp01(g.timeFollowingWeight);
     }
 }
