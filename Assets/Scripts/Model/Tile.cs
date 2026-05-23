@@ -18,6 +18,7 @@ public class Tile
     public int X { get; protected set; }
     public int Y { get; protected set; }
     public Food food { get; protected set; }
+    public Shelter Shelter { get; protected set; }
     public float HeatCounter { get; set; }
 
     public float MovementCost
@@ -440,4 +441,29 @@ public class Tile
         OnTileTypeChangedCallback -= cb;
     }
 
+    // ADDING SHELTER: EnvSystem
+    public bool HasShelter()
+    {
+        return Shelter != null;
+    }
+
+    public void AddShelter(Shelter shelter)
+    {
+        Shelter = shelter;
+    }
+
+    public void RemoveShelter()
+    {
+        Shelter = null;
+    }
+
+    public bool HasFreeShelter()
+    {
+        return Shelter != null && !Shelter.IsOccupied;
+    }
+
+    public bool IsShelterOccupied()
+    {
+        return Shelter != null && Shelter.IsOccupied;
+    }
 }

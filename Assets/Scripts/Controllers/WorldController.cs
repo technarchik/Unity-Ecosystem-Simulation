@@ -28,6 +28,8 @@ public class WorldController : MonoBehaviour
     public float Days = 0;
 
     public float nutritionNeeded = 40f;
+    public int ShelterCount = 10;
+    public ShelterSpriteController ShelterSpriteController;
 
     //-------Creation Variables-------------//
     public static int PreyCount = 20;
@@ -74,6 +76,7 @@ public class WorldController : MonoBehaviour
         World.FoodManager.RegisterOnFoodSproutedCallback(FoodSpriteController.OnFoodSpawned);
         World.FoodManager.RegisterOnFoodExhaustedCallback(FoodSpriteController.OnFoodExhausted);
         World.FoodManager.RegisterOnFoodChangedCallback(FoodSpriteController.OnFoodChanged);
+        World.ShelterManager.RegisterOnShelterSpawnedCallback(ShelterSpriteController.OnShelterSpawned);
 
         for (int x = 0; x < World.Width; x++)
         {
@@ -91,6 +94,7 @@ public class WorldController : MonoBehaviour
 
         // EnvSystem: init after terrain
         World.Environment.Initialize();
+        World.SpawnInitialShelters(ShelterCount);
 
         World.SproutInitialFood();
         World.SpawnAnimals(PreyCount, PredatorCount);

@@ -13,6 +13,7 @@ public static class CSVData
     public static List<int> PredatorPopulation = new List<int>();
     public static List<int> NutritionTotal = new List<int>();
     public static List<int> NumFoodTiles = new List<int>();
+    public static List<int> NumShelterTiles = new List<int>();
     public static List<int> NumWaterTiles = new List<int>();
     public static List<int> NumGrassTiles = new List<int>();
     private static List<string> EventData = new List<string>();
@@ -28,6 +29,7 @@ public static class CSVData
         PredatorPopulation.Add(world.AnimalManager.Predators.Count);
         NutritionTotal.Add(world.getTotalNutritionOnMap());
         NumFoodTiles.Add(world.getFoodTiles().Count);
+        NumShelterTiles.Add(world.getShelterTiles().Count);
         NumWaterTiles.Add(world.getWaterTiles().Count);
         NumGrassTiles.Add(world.getGrassTiles().Count);
         world.getGrassTiles();
@@ -48,7 +50,7 @@ public static class CSVData
             using (StreamWriter sw = File.CreateText(path))
             {
                 // Write the header
-                sw.WriteLine("Prey Population,Predator Population,Total Population,Nutrition,Total Food,Water Tiles, Grass Tiles");
+                sw.WriteLine("Prey Population,Predator Population,Total Population,Nutrition,Total Food,Shelter Tiles,Water Tiles, Grass Tiles");
             }
             hasWrittenWorldData = true;
         }
@@ -58,7 +60,8 @@ public static class CSVData
         {
             sw.WriteLine($"{PreyPopulation[daysProcessed]},{PredatorPopulation[daysProcessed]}," +
                 $"{PreyPopulation[daysProcessed] + PredatorPopulation[daysProcessed]},{NutritionTotal[daysProcessed]}," +
-                $"{NumFoodTiles[daysProcessed]},{NumWaterTiles[daysProcessed]}, {NumGrassTiles[daysProcessed]}");
+                $"{NumFoodTiles[daysProcessed]},{NumShelterTiles[daysProcessed]},{NumWaterTiles[daysProcessed]}, " +
+                $"{NumGrassTiles[daysProcessed]}");
         }
         daysProcessed++;
 
@@ -103,6 +106,7 @@ public static class CSVData
         PredatorPopulation.Clear();
         NutritionTotal.Clear();
         NumFoodTiles.Clear();
+        NumShelterTiles.Clear();
         NumWaterTiles.Clear();
         NumGrassTiles.Clear();
         daysProcessed = 0;

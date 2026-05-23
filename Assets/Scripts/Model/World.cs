@@ -13,6 +13,7 @@ public class World
     public TerrainGenerator TerrainGenerator { get; protected set; }
     public AnimalManager AnimalManager { get; protected set; }
     public FoodManager FoodManager { get; protected set; }
+    public ShelterManager ShelterManager { get; protected set; }
     public EventManager EventManager { get; protected set; }
     public WorldData Data { get; protected set; }
     public EnvironmentSystem Environment { get; protected set; } // EnvSystem: its a system for env changes
@@ -25,6 +26,7 @@ public class World
         TerrainGenerator = new TerrainGenerator();
         AnimalManager = new AnimalManager(this);
         FoodManager = new FoodManager();
+        ShelterManager = new ShelterManager();
         EventManager = new EventManager();
         Data = new WorldData();
         Environment = new EnvironmentSystem(Width, Height, this); // EnvSystem: initialization of env system
@@ -173,6 +175,12 @@ public class World
         FoodManager.SproutInitialFood(tiles);
     }
 
+    // EnvSystem
+    public void SpawnInitialShelters(int shelterCount)
+    {
+        ShelterManager.SpawnInitialShelters(this, shelterCount);
+    }
+
     public Tile GetTileAt(int x, int y)
     {
         if (x < 0 || x >= Width || y < 0 || y >= Height)
@@ -225,6 +233,15 @@ public class World
     public List<Tile> getFoodTiles() 
     {
         return FoodManager.FoodTiles;
+    }
+
+    /// <summary>
+    /// Gets all the tiles with shelter on the map.
+    /// </summary>
+    /// <returns>List of tiles that contain shelter</returns>
+    public List<Tile> getShelterTiles()
+    {
+        return ShelterManager.ShelterTiles;
     }
 
     /// <summary>
