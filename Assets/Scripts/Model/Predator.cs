@@ -213,7 +213,10 @@ public class Predator : Animal
 
         if (CurrentTarget.IsHiding)
         {
-            DestinationTile = CurrentTarget.CurrentTile;
+            Tile shelterTile = CurrentTarget.CurrentTile;
+            Tile waitingTile = GetClosestWaitingTileNearShelter(shelterTile);
+
+            DestinationTile = waitingTile != null ? waitingTile : CurrentTile;
 
             if (CurrentTile == DestinationTile)
             {
@@ -399,6 +402,36 @@ public class Predator : Animal
         // this.ChildrenCount += litterSize;
         // getPartner().ChildrenCount += litterSize;
         TotalChildrenCount += litterSize;
+    }
+
+    // for waiting Prey NEAR shelter, not on it
+    private Tile GetClosestWaitingTileNearShelter(Tile shelterTile)
+    {
+        List<Tile> neighbours = shelterTile.GetWalkableNeighboursIncludingDiagonal();
+
+        Tile closest = null;
+        int closestDistance = int.MaxValue;
+
+        foreach (Tile tile in neighbours)
+        {
+            if (tile == null)
+                continue;
+
+            int distance = World.ManhattanDistance(
+                CurrentTile.X,
+                CurrentTile.Y,
+                tile.X,
+                tile.Y
+            );
+
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closest = tile;
+            }
+        }
+
+        return closest;
     }
 
     override
