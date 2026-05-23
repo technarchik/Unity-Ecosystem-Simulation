@@ -250,7 +250,7 @@ public class World
     /// <returns>List of prey.</returns>
     public List<Prey> getPrey() 
     {
-        return AnimalManager.Prey;
+        return AnimalManager.predator;
     }
 
     /// <summary>

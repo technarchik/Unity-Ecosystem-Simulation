@@ -40,7 +40,13 @@ public enum AnimalState
     SearchingForMate,
     MovingToMate,
     Breeding,
-    FollowingParent
+    FollowingParent,
+
+    // EnvSystem: only for Prey
+    Scared,
+    SeekShelter,
+    FoundShelter,
+    Hiding
 }
 
 public enum AdaptiveState // states for activating GA

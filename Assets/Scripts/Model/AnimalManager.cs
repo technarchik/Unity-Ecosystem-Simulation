@@ -6,7 +6,7 @@ using Assets.Scripts.Model;
 
 public class AnimalManager
 {
-    public List<Prey> Prey { get; protected set; }
+    public List<Prey> predator { get; protected set; }
     public List<Predator> Predators { get; protected set; }
     public List<Animal> AllAnimals { get; protected set; }
     public BreedingManager breedingManager { get; protected set; }
@@ -22,7 +22,7 @@ public class AnimalManager
     public AnimalManager(World w)
     {
         world = w;
-        Prey = new List<Prey>();
+        predator = new List<Prey>();
         Predators = new List<Predator>();
         AllAnimals = new List<Animal>();
         breedingManager = new BreedingManager();
@@ -95,7 +95,7 @@ public class AnimalManager
         int startY = y - r;
         int endX = x + r;
         int endY = y + r;
-        foreach (Prey p in Prey)
+        foreach (Prey p in predator)
         {
             if (p.CurrentTile.X >= startX && p.CurrentTile.X <= endX && p.CurrentTile.Y >= startY &&
                 p.CurrentTile.Y <= endY && !p.IsBeingChased)
@@ -117,6 +117,44 @@ public class AnimalManager
         return closest;
     }
 
+    // EnvSystem : fear
+    /// <summary>
+    /// Helper method to find closest predator within a radius.
+    /// </summary>
+    /// <param name="x">X position.</param>
+    /// <param name="y">Y position.</param>
+    /// <param name="r">Radius.</param>
+    /// <returns>The closest predator in radius or null if none found.</returns>
+    public Predator FindClosestPredatorInRadius(int x, int y, int r)
+    {
+        Predator closest = null;
+
+        int startX = x - r;
+        int startY = y - r;
+        int endX = x + r;
+        int endY = y + r;
+        int closestDistance = Int32.MaxValue;
+
+        foreach (Predator p in Predators)
+        {
+            if (p.CurrentTile.X >= startX && 
+                p.CurrentTile.X <= endX && 
+                p.CurrentTile.Y >= startY &&
+                p.CurrentTile.Y <= endY)
+            {
+                int currentDist = World.ManhattanDistance(x, y, p.CurrentTile.X, p.CurrentTile.Y);
+
+                if (currentDist < closestDistance)
+                {
+                    closestDistance = currentDist;
+                    closest = p;
+                }
+            }
+        }
+
+        return closest;
+    }
+
     /// <summary>
     /// Helper method to find the closest prey to a given position.
     /// </summary>
@@ -127,7 +165,7 @@ public class AnimalManager
     {
         Prey closest = null;
         int closestDistance = Int32.MaxValue;
-        foreach (Prey a in Prey)
+        foreach (Prey a in predator)
         {
             int currentDist = World.ManhattanDistance(x, y, a.CurrentTile.X, a.CurrentTile.Y);
             if (a.lifeStage == LifeStage.Adult) currentDist += 5; // Add priority for kids and elders
@@ -189,7 +227,7 @@ public class AnimalManager
     public Prey SpawnPrey(Tile tile, Gender gender, Prey mother, Genome genome)
     {
         Prey p = new Prey(tile, this, currentPreyID, gender, mother, genome);
-        Prey.Add(p);
+        predator.Add(p);
         Spawn(p);
         currentPreyID++;
         Debug.Log(p.ToString() + " - " + p.AnimalSex);
@@ -216,7 +254,7 @@ public class AnimalManager
     {
         if (a.AnimalType == AnimalType.Prey)
         {
-            Prey.Remove(a as Prey);
+            predator.Remove(a as Prey);
         }
 
         else 

@@ -176,6 +176,18 @@ public class Predator : Animal
     /// <param name="deltaTime">Time between last frame.</param>
     public void UpdateDoEating(float deltaTime)
     {
+        // protect hiding prey from being eaten
+        if (CurrentTarget == null)
+        {
+            CurrentState = AnimalState.Idle;
+            return;
+        }
+        if (CurrentTarget.IsHiding)
+        {
+            CurrentState = AnimalState.FoundFood;
+            return;
+        }
+
         // TODO: add some kind of timer? chance to fail?
         CurrentTarget.SetIsBeingChased(false);
         CurrentTarget.GetEaten();
@@ -191,6 +203,27 @@ public class Predator : Animal
     /// <param name="deltaTime">Time between last frame.</param>
     public void UpdateDoFoundFood(float deltaTime)
     {
+        // to think about it! EnvSystem : fear #todo
+        // (waiting for prey to stop hiding)
+        if (CurrentTarget == null)
+        {
+            CurrentState = AnimalState.Idle;
+            return;
+        }
+
+        if (CurrentTarget.IsHiding)
+        {
+            DestinationTile = CurrentTarget.CurrentTile;
+
+            if (CurrentTile == DestinationTile)
+            {
+                StopMovement();
+            }
+
+            return;
+        }
+
+
         if (DestinationTile != CurrentTarget.CurrentTile)
         {
             DestinationTile = CurrentTarget.CurrentTile;

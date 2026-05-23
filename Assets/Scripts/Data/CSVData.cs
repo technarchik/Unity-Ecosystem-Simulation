@@ -25,7 +25,7 @@ public static class CSVData
 
     public async static void CollectData(World world)
     {
-        PreyPopulation.Add(world.AnimalManager.Prey.Count);
+        PreyPopulation.Add(world.AnimalManager.predator.Count);
         PredatorPopulation.Add(world.AnimalManager.Predators.Count);
         NutritionTotal.Add(world.getTotalNutritionOnMap());
         NumFoodTiles.Add(world.getFoodTiles().Count);

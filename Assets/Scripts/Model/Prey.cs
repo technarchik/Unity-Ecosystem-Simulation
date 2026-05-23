@@ -1,10 +1,17 @@
 using Assets.Scripts.Model;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Prey : Animal
 {
+    // EnvSystem : fear
+    public bool IsScared { get; private set; }
+    public bool IsHiding => CurrentState == AnimalState.Hiding;
+    private float hidingTimer; // just for test
+    private float hidingDuration = 5f; // just for test
+    private Shelter currentShelter;
     public bool IsBeingChased { get; protected set; }
     public bool IsEaten { get; protected set; }
     public Prey(Tile tile, AnimalManager animalManager, int id, Gender gender, Prey mother, Genome genome) : base(tile, AnimalType.Prey, animalManager, id, gender, mother, genome)
@@ -36,6 +43,14 @@ public class Prey : Animal
     /// </summary>
     public override void Die()
     {
+        // EnvSystem : fear
+        // if animal died in shelter, we need to release shelter
+        if (currentShelter != null)
+        {
+            currentShelter.Release(this);
+            currentShelter = null;
+        }
+
         if (DestinationTile != null && DestinationTile.HasFood() && DestinationTile.isFoodOccupied())
         {
             DestinationTile.setFoodUnoccupied();
@@ -48,6 +63,10 @@ public class Prey : Animal
 
     public void GetEaten()
     {
+        // protect from accidental eating
+        if (IsHiding)
+            return;
+
         IsEaten = true;
         Die();
     }
@@ -70,6 +89,7 @@ public class Prey : Animal
         UpdateAge(deltaTime);
         UpdateDoMovement(deltaTime);
         UpdatePregnancy(deltaTime);
+        UpdateFearState(deltaTime); // EnvSystem : fear
         switch (CurrentState)
         {
             case AnimalState.Idle:
@@ -116,6 +136,19 @@ public class Prey : Animal
                 break;
             case AnimalState.FollowingParent:
                 UpdateDoFollowingParent(deltaTime);
+                break;
+            // EnvSystem : fear
+            case AnimalState.Scared:
+                UpdateDoScared(deltaTime);
+                break;
+            case AnimalState.SeekShelter:
+                UpdateDoSeekingShelter(deltaTime);
+                break;
+            case AnimalState.FoundShelter:
+                UpdateDoFoundShelter(deltaTime);
+                break;
+            case AnimalState.Hiding:
+                UpdateDoHiding(deltaTime);
                 break;
             default:
                 Debug.LogError("Unrecognised state " + CurrentState);
@@ -429,6 +462,127 @@ public class Prey : Animal
         // getPartner().ChildrenCount += litterSize;
         TotalChildrenCount += litterSize;
     }
+
+    #region EnvSystem : Fear
+    private void UpdateFearState(float deltaTime)
+    {
+        if (CurrentState == AnimalState.Hiding)
+            return;
+
+        Predator predator = AnimalManager.FindClosestPredatorInRadius(CurrentTile.X,CurrentTile.Y,SightRange);
+
+        IsScared = predator != null;
+
+        if (IsScared &&
+            CurrentState != AnimalState.Scared &&
+            CurrentState != AnimalState.SeekShelter &&
+            CurrentState != AnimalState.FoundShelter)
+        {
+            StopMovement();
+
+            if (DestinationTile != null && DestinationTile.HasFood() && DestinationTile.isFoodOccupied())
+            {
+                DestinationTile.setFoodUnoccupied();
+            }
+
+            CurrentState = AnimalState.Scared;
+        }
+    }
+
+    public void UpdateDoScared(float deltaTime)
+    {
+        StopMovement();
+        CurrentState = AnimalState.SeekShelter;
+    }
+
+    public void UpdateDoSeekingShelter(float deltaTime)
+    {
+        Tile shelterTile = FindClosestFreeShelterTile();
+
+        if (shelterTile != null)
+        {
+            DestinationTile = shelterTile;
+            CurrentState = AnimalState.FoundShelter;
+        }
+        else
+        {
+            DestinationTile = CurrentTile.GetRandomNonWaterTileInRadius(SightRange);
+            CurrentState = AnimalState.Wandering;
+        }
+    }
+
+    public void UpdateDoFoundShelter(float deltaTime)
+    {
+        if (DestinationTile == null || !DestinationTile.HasFreeShelter())
+        {
+            CurrentState = AnimalState.SeekShelter;
+            return;
+        }
+
+        if (CurrentTile == DestinationTile)
+        {
+            StopMovement();
+
+            bool occupied = CurrentTile.Shelter.TryOccupy(this);
+
+            if (occupied)
+            {
+                currentShelter = CurrentTile.Shelter;
+                hidingTimer = 0f;
+                CurrentState = AnimalState.Hiding;
+            }
+            else
+            {
+                CurrentState = AnimalState.SeekShelter;
+            }
+        }
+    }
+
+    public void UpdateDoHiding(float deltaTime)
+    {
+        StopMovement();
+
+        hidingTimer += deltaTime;
+
+        if (hidingTimer >= hidingDuration)
+        {
+            if (currentShelter != null)
+            {
+                currentShelter.Release(this);
+                currentShelter = null;
+            }
+
+            hidingTimer = 0f;
+            IsScared = false;
+            CurrentState = AnimalState.Idle;
+        }
+    }
+
+    // EnvSystem : fear
+    // seek for the closest shelter
+    private Tile FindClosestFreeShelterTile()
+    {
+        List<Tile> tiles = CurrentTile.GetRadius(SightRange);
+        Tile closest = null;
+        int closestDistance = Int32.MaxValue;
+
+        foreach (Tile tile in tiles)
+        {
+            if (tile != null && tile.HasFreeShelter())
+            {
+                int distance = World.ManhattanDistance(CurrentTile.X, CurrentTile.Y, tile.X, tile.Y);
+
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    closest = tile;
+                }
+            }
+        }
+
+        return closest;
+    }
+    #endregion
 
     override
     public string ToString()
