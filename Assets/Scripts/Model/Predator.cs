@@ -298,7 +298,7 @@ public class Predator : Animal
         //Aging up
         if (lifeStage != LifeStage.Elder)
         {
-            if (age == 5 && lifeStage != LifeStage.Adult)
+            if (age == 3 && lifeStage != LifeStage.Adult)
             {
                 lifeStage = LifeStage.Adult;
                 Debug.Log(this.ToString() + "is now an Adult");
@@ -348,7 +348,7 @@ public class Predator : Animal
 
     public override void GiveBirth()
     {
-        int litterSize = UnityEngine.Random.Range(3, 5); // myTODO: should be genome.fertility
+        int litterSize = UnityEngine.Random.Range(1, 3); // myTODO: should be genome.fertility
 
         for (int i = 0; i < litterSize; i++)
         {

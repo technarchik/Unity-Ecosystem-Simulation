@@ -360,13 +360,13 @@ public class Prey : Animal
         //Aging up
         if (lifeStage != LifeStage.Elder)
         {
-            if (age == 10 && lifeStage != LifeStage.Adult)
+            if (age == 3 && lifeStage != LifeStage.Adult)
             {
                 lifeStage = LifeStage.Adult;
                 Debug.Log(this.ToString() + "is now an Adult");
             }
 
-            else if (age == 40)
+            else if (age == 20)
             {
                 lifeStage = LifeStage.Elder;
                 Debug.Log(this.ToString() + "is now an Elder");
@@ -377,7 +377,7 @@ public class Prey : Animal
         else
         {
             int randomNum = UnityEngine.Random.Range(0, 100);
-            int changeOfDeath = age - 35;
+            int changeOfDeath = age - 15;
 
             if (randomNum < (changeOfDeath))
             {
@@ -410,7 +410,7 @@ public class Prey : Animal
 
     public override void GiveBirth()
     {
-        int litterSize = UnityEngine.Random.Range(4, 9); // myTODO: should be genome.fertility
+        int litterSize = UnityEngine.Random.Range(3, 5); // myTODO: should be genome.fertility
 
         for (int i = 0; i < litterSize; i++)
         {
