@@ -14,11 +14,17 @@ public class Prey : Animal
     private Shelter currentShelter;
     public bool IsBeingChased { get; protected set; }
     public bool IsEaten { get; protected set; }
+    public DecisionGenomePrey DecisionGenome { get; set; }
+
+    private Predator visiblePredator;
+    private float currentFearPressure;
+
     public Prey(Tile tile, AnimalManager animalManager, int id, Gender gender, Prey mother, Genome genome) : base(tile, AnimalType.Prey, animalManager, id, gender, mother, genome)
     {
-        breedingCooldown = (2 * TimeController.Instance.SECONDS_IN_A_DAY) * WorldController.PreyBreedingRate;
+        breedingCooldown = (0.5f * TimeController.Instance.SECONDS_IN_A_DAY) * WorldController.PreyBreedingRate;
         IsBeingChased = false;
         IsEaten = false;
+        DecisionGenome = DecisionGenomePrey.Random();
     }
 
     /// <summary>
@@ -82,14 +88,17 @@ public class Prey : Animal
     /// <param name="deltaTime">Time between last frame</param>
     public override void Update(float deltaTime)
     {
-        Hunger -= (deltaTime * TimeController.Instance.GetTimesADayMultiplier(this.Genome.hungerDecreasingSpeed));
-        Thirst -= (deltaTime * TimeController.Instance.GetTimesADayMultiplier(this.Genome.thirstDecreasingSpeed));
+        //Hunger -= (deltaTime * TimeController.Instance.GetTimesADayMultiplier(this.Genome.hungerDecreasingSpeed));
+        //Thirst -= (deltaTime * TimeController.Instance.GetTimesADayMultiplier(this.Genome.thirstDecreasingSpeed));
+        UpdateNeedsByTemp(deltaTime);
         UpdateHP(deltaTime);
         timeSinceLastBreeded += deltaTime;
         UpdateAge(deltaTime);
         UpdateDoMovement(deltaTime);
         UpdatePregnancy(deltaTime);
-        UpdateFearState(deltaTime); // EnvSystem : fear
+        UpdateFearState(); // EnvSystem : fear
+        UpdateEvolutionStats(deltaTime); // GASystem
+
         switch (CurrentState)
         {
             case AnimalState.Idle:
@@ -332,30 +341,36 @@ public class Prey : Animal
         World world = WorldController.Instance.World;
         StopMovement();
 
-        if (!IsReadyToBreed()) 
-        { 
-            AnimalManager.breedingManager.removeFromBreedList(this); 
+        AnimalState nextState = DecidePreyState();
+        if (nextState != CurrentState)
+        {
+            CurrentState = nextState;
         }
 
-        if (IsThirsty())
-        {
-            CurrentState = AnimalState.Thirsty;
-        }
+        //if (!IsReadyToBreed()) 
+        //{ 
+        //    AnimalManager.breedingManager.removeFromBreedList(this); 
+        //}
 
-        else if (IsHungry())
-        {
-            CurrentState = AnimalState.Hungry;
-        }
+        //if (IsThirsty())
+        //{
+        //    CurrentState = AnimalState.Thirsty;
+        //}
 
-        else if (IsReadyToBreed())
-        {
-            CurrentState = AnimalState.ReadyToBreed;
-        }
+        //else if (IsHungry())
+        //{
+        //    CurrentState = AnimalState.Hungry;
+        //}
 
-        else
-        {
-            CurrentState = AnimalState.Wandering;
-        }
+        //else if (IsReadyToBreed())
+        //{
+        //    CurrentState = AnimalState.ReadyToBreed;
+        //}
+
+        //else
+        //{
+        //    CurrentState = AnimalState.Wandering;
+        //}
     }
 
 
@@ -393,7 +408,7 @@ public class Prey : Animal
         //Aging up
         if (lifeStage != LifeStage.Elder)
         {
-            if (age == 3 && lifeStage != LifeStage.Adult)
+            if (age == 1 && lifeStage != LifeStage.Adult)
             {
                 lifeStage = LifeStage.Adult;
                 Debug.Log(this.ToString() + "is now an Adult");
@@ -441,52 +456,71 @@ public class Prey : Animal
         this.lifeStage = LifeStage.Elder;
     }
 
-    public override void GiveBirth()
+    public override void GiveBirth(Animal father)
     {
-        int litterSize = UnityEngine.Random.Range(3, 5); // myTODO: should be genome.fertility
+        Prey fatherPrey = father as Prey;
+
+        if (fatherPrey == null)
+        {
+            Debug.LogError($"{this} cannot give birth: father is null or not Prey.");
+            pregnacy = null;
+            return;
+        }
+
+        int litterSize = Mathf.RoundToInt(Genome.fertility);
 
         for (int i = 0; i < litterSize; i++)
         {
-            Prey child = AnimalManager.SpawnPrey(CurrentTile, this, this.Genome); // myTODO: здесь метод передачи генома от родителя ребенку Genome.Inheritance
+            Genome childGenome = GenomeInheritance.CreateChildGenome(this.Genome,fatherPrey.Genome,AnimalType.Prey);
+
+            DecisionGenomePrey childDecisionGenome = DecisionGenomeInheritance.CreateChildPreyGenome(this.DecisionGenome,fatherPrey.DecisionGenome);
+
+            Prey child = AnimalManager.SpawnPrey(CurrentTile, this, childGenome);
+            child.DecisionGenome = childDecisionGenome;
             child.CurrentState = AnimalState.FollowingParent;
         }
 
-        Debug.Log(this + " - Gives Birth");
-
         pregnacy = null;
         timeSinceLastBreeded = 0f;
-
-        // counter for fitness
-        // myTODO: else think about father - he has no counter (before ClearPartner in Animal.cs (482))
-        // this.ChildrenCount += litterSize;
-        // getPartner().ChildrenCount += litterSize;
         TotalChildrenCount += litterSize;
+        EvolutionStats.ChildrenCount += litterSize;
+
+        //int litterSize = UnityEngine.Random.Range(3, 5); // myTODO: should be genome.fertility
+
+        //for (int i = 0; i < litterSize; i++)
+        //{
+        //    Prey child = AnimalManager.SpawnPrey(CurrentTile, this, this.Genome); // myTODO: здесь метод передачи генома от родителя ребенку Genome.Inheritance
+        //    child.CurrentState = AnimalState.FollowingParent;
+        //}
+
+        //Debug.Log(this + " - Gives Birth");
+
+        //pregnacy = null;
+        //timeSinceLastBreeded = 0f;
+
+        //// counter for fitness
+        //// myTODO: else think about father - he has no counter (before ClearPartner in Animal.cs (482))
+        //// this.ChildrenCount += litterSize;
+        //// getPartner().ChildrenCount += litterSize;
+        //TotalChildrenCount += litterSize;
     }
 
     #region EnvSystem : Fear
-    private void UpdateFearState(float deltaTime)
+    private void UpdateFearState()
     {
-        if (CurrentState == AnimalState.Hiding)
-            return;
-
-        Predator predator = AnimalManager.FindClosestPredatorInRadius(CurrentTile.X,CurrentTile.Y,SightRange);
-
-        IsScared = predator != null;
-
-        if (IsScared &&
-            CurrentState != AnimalState.Scared &&
-            CurrentState != AnimalState.SeekShelter &&
-            CurrentState != AnimalState.FoundShelter)
+        visiblePredator = AnimalManager.FindClosestPredatorInRadius(CurrentTile.X,CurrentTile.Y,SightRange);
+        IsScared = visiblePredator != null;
+        if (visiblePredator == null)
         {
-            StopMovement();
-
-            if (DestinationTile != null && DestinationTile.HasFood() && DestinationTile.isFoodOccupied())
-            {
-                DestinationTile.setFoodUnoccupied();
-            }
-
-            CurrentState = AnimalState.Scared;
+            currentFearPressure = 0f;
+            return;
         }
+        int distance = World.ManhattanDistance(CurrentTile.X,CurrentTile.Y,visiblePredator.CurrentTile.X,visiblePredator.CurrentTile.Y);
+        
+        // predator is near -> proximity ~ 1, far away -> proximity ~ 0
+        float proximity = 1f - Mathf.Clamp01((float)distance / Mathf.Max(SightRange, 1));
+        currentFearPressure = proximity * DecisionGenome.fearWeight;
+        // EvolutionStats.PredatorEncounters++; // called every frame - not good
     }
 
     public void UpdateDoScared(float deltaTime)
@@ -497,6 +531,15 @@ public class Prey : Animal
 
     public void UpdateDoSeekingShelter(float deltaTime)
     {
+        // stop searching shelter
+        if (!IsScared)
+        {
+            StopMovement();
+            CurrentState = AnimalState.Wandering;
+            return;
+        }
+        
+        // continue searching shelter
         Tile shelterTile = FindClosestFreeShelterTile();
 
         if (shelterTile != null)
@@ -507,12 +550,20 @@ public class Prey : Animal
         else
         {
             DestinationTile = CurrentTile.GetRandomNonWaterTileInRadius(SightRange);
-            CurrentState = AnimalState.Wandering;
+            CurrentState = AnimalState.SeekShelter;
         }
     }
 
     public void UpdateDoFoundShelter(float deltaTime)
     {
+        // dont need a shelter anymore
+        //if (!IsScared)
+        //{
+        //    StopMovement();
+        //    CurrentState = AnimalState.Wandering;
+        //    return;
+        //}
+
         if (DestinationTile == null || !DestinationTile.HasFreeShelter())
         {
             CurrentState = AnimalState.SeekShelter;
@@ -529,6 +580,7 @@ public class Prey : Animal
             {
                 currentShelter = CurrentTile.Shelter;
                 hidingTimer = 0f;
+                EvolutionStats.TimesEnteredShelter++; // needed?
                 CurrentState = AnimalState.Hiding;
             }
             else
@@ -541,6 +593,7 @@ public class Prey : Animal
     public void UpdateDoHiding(float deltaTime)
     {
         StopMovement();
+        EvolutionStats.TimeSpentHiding += deltaTime;
 
         hidingTimer += deltaTime;
 
@@ -581,6 +634,77 @@ public class Prey : Animal
         }
 
         return closest;
+    }
+
+    // deciding in shelter
+    private AnimalState DecideWhileHiding(float hungerPressure,float thirstPressure,float fearPressure)
+    {
+        // must look for needs!
+        if (Hunger <= 0f)
+        {
+            return AnimalState.Hungry;
+        }
+        if (Thirst <= 0f)
+        {
+            return AnimalState.Thirsty;
+        }
+        float resourcePressure = Mathf.Max(hungerPressure, thirstPressure);
+
+        // riskTolerance higher - easier to leave the shelter
+        float stayingFearPressure = fearPressure * (1f - DecisionGenome.riskTolerance);
+        if (resourcePressure > stayingFearPressure)
+        {
+            if (thirstPressure > hungerPressure)
+            {
+                return AnimalState.Thirsty;
+            }
+            return AnimalState.Hungry;
+        }
+        return AnimalState.Hiding;
+    }
+    #endregion
+
+    #region GASystem
+    // decision making
+    private AnimalState DecidePreyState()
+    {
+        float hungerPressure = (1f - Hunger) * DecisionGenome.hungerWeight;
+        float thirstPressure = (1f - Thirst) * DecisionGenome.thirstWeight;
+        float adjustedFear = currentFearPressure * DecisionGenome.hideSeekingWeight * (1f - DecisionGenome.riskTolerance);
+
+        // if already loosing HP - must to leave the shelter
+        if (Hunger <= 0f)
+        {
+            return AnimalState.Hungry;
+        }
+        if (Thirst <= 0f)
+        {
+            return AnimalState.Thirsty;
+        }
+
+        // looking for compromise
+        if (CurrentState == AnimalState.Hiding)
+        {
+            return DecideWhileHiding(hungerPressure, thirstPressure, adjustedFear);
+        }
+
+        if (adjustedFear > hungerPressure && adjustedFear > thirstPressure)
+        {
+            return AnimalState.Scared;
+        }
+        if (thirstPressure > hungerPressure && IsThirsty())
+        {
+            return AnimalState.Thirsty;
+        }
+        if (hungerPressure >= thirstPressure && IsHungry())
+        {
+            return AnimalState.Hungry;
+        }
+        if (IsReadyToBreed()) // надо добавить про breeding
+        {
+            return AnimalState.ReadyToBreed;
+        }
+        return AnimalState.Wandering;
     }
     #endregion
 

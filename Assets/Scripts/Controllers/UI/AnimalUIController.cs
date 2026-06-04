@@ -25,6 +25,8 @@ public class AnimalUIController : MonoBehaviour
 
     public Slider ThirstSlider;
 
+    public Slider StaminaSlider;
+
     private MouseController mouseController;
 
     public Animal currentlySelected { get; protected set; }
@@ -56,7 +58,17 @@ public class AnimalUIController : MonoBehaviour
             NameText.text = "Name: " + currentlySelected.ToString();
             HungerSlider.value = currentlySelected.Hunger;
             ThirstSlider.value = currentlySelected.Thirst;
-            StateText.text = $"Current State: {currentlySelected.CurrentState}";
+            StaminaSlider.value = currentlySelected.CurrentStamina / currentlySelected.MaxStamina;
+
+            if (currentlySelected.CurrentState == AnimalState.Wandering ||
+                currentlySelected.CurrentState == AnimalState.Idle)
+            {
+                StateText.text = "Current State: N/A";
+            }
+            else
+            {
+                StateText.text = $"Current State: {currentlySelected.CurrentState}";
+            }
             AdaptiveText.text = $"Adaptive: {currentlySelected.CurrentAdaptiveState} : {currentlySelected.Genome.tempResist:F1}";
             AgeText.text = $"Age: {currentlySelected.Age}";
             AgeStageText.text = $"Age Stage: {currentlySelected.lifeStage}";
@@ -72,6 +84,10 @@ public class AnimalUIController : MonoBehaviour
             AgeStageText.text = "Age Stage: N/A";
             GenderText.text = "Gender: N/A";
             HPText.text = $"HP: N/A";
+
+            HungerSlider.value = 0f;
+            ThirstSlider.value = 0f;
+            StaminaSlider.value = 0f;
         }
     }
 

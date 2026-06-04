@@ -83,6 +83,15 @@ public abstract class Animal
     public float TimeAlive { get; protected set; }
     public int TotalChildrenCount { get; protected set; }
     public Genome Genome { get; protected set; }
+    public float CurrentStamina { get; protected set; }
+
+    public float MaxStamina => Genome.maxStamina;
+
+    protected bool IsSprinting;
+
+    protected float sprintSpeedMultiplier = 2f;
+    protected float staminaDrainPerSecond = 0.15f;
+    protected float staminaRegenPerSecond = 0.1f;
     public int Age
     {
         get { return (int)Math.Floor(TimeAlive/TimeController.Instance.SECONDS_IN_A_DAY); }
@@ -101,6 +110,7 @@ public abstract class Animal
     public float Speed { get; protected set; }
     public float Stamina { get; protected set; }
     public int SightRange { get; protected set; }
+    public EvolutionStats EvolutionStats { get; protected set; } = new EvolutionStats();
     public Animal Mother { get; protected set; }
     private float movePercentage;
     private int swimDistance; // used to keep track far animal has swam
@@ -109,7 +119,7 @@ public abstract class Animal
     private float adaptiveCheckTimer;
     private float adaptiveCheckInterval = 0.2f;
 
-    protected GeneticAlgorithm geneticAlgorithm;
+    //protected GeneticAlgorithm geneticAlgorithm;
 
     private Queue<Tile> path;
 
@@ -128,6 +138,7 @@ public abstract class Animal
         Thirst = 1f;
         HP = MaxHP;
         Stamina = genome.maxStamina;
+        CurrentStamina = genome.maxStamina;
 
         Speed = genome.speed;
         SightRange = genome.sightRange;
@@ -146,8 +157,8 @@ public abstract class Animal
         timeSinceLastBreeded = 0;
         Mother = mother;
 
-        geneticAlgorithm = new GeneticAlgorithm();
-        geneticAlgorithm.Initialize(this);
+        //geneticAlgorithm = new GeneticAlgorithm();
+        //geneticAlgorithm.Initialize(this);
     }
 
     /// <summary>
@@ -172,8 +183,8 @@ public abstract class Animal
     /// <param name="deltaTime">Time between last frame.</param>
     protected void UpdateTemperatureResist(float deltaTime) //////////////////////////////////////////////////
     {
-        var ga = WorldController.Instance.ga;
-        ga.DoGA(this);
+        var ga = WorldController.Instance.gaManager;
+        //ga.DoGA(this);
     }
 
     /// <summary>
@@ -181,7 +192,7 @@ public abstract class Animal
     /// </summary>
     private AdaptiveState EvaluateAdaptiveState()
     {
-        var ga = WorldController.Instance.ga;
+        var ga = WorldController.Instance.gaManager;
 
         //// --- FOOD ---
         //if (AnimalType == AnimalType.Prey)
@@ -369,7 +380,7 @@ public abstract class Animal
     public void UpdateDoGA(float deltaTime)
     {
         //var best = geneticAlgorithm.Evolve(this);
-        this.CurrentAdaptiveState = geneticAlgorithm.TemperatureTest(this);
+        //this.CurrentAdaptiveState = geneticAlgorithm.TemperatureTest(this);
         //ApplyDecision(best);
     }
     //public abstract void UpdateDoGA(float deltaTime);
@@ -441,6 +452,7 @@ public abstract class Animal
                 NextTile = path.Dequeue();
             }
         }
+        //
         else
         {
             if (NextTile == null || NextTile == CurrentTile)
@@ -455,11 +467,31 @@ public abstract class Animal
                 }
             }
         }
+        // DELETE WANDERING
+        //else
+        //{
+        //    if (CurrentState == AnimalState.FollowingParent)
+        //    {
+        //        if (NextTile == null || NextTile == CurrentTile)
+        //        {
+        //            if (lifeStage == LifeStage.Child && Mother != null && !Mother.ShouldDie())
+        //            {
+        //                NextTile = AnimalManager.PathManager.GetFollowMotherTile(Mother.CurrentTile, CurrentTile);
+        //            }
+        //        }
+        //    }
+        //    else if (CurrentState == AnimalState.Wandering)
+        //    {
+        //        StopMovement();
+        //        return;
+        //    }
+        //}
 
         float distToTravel = Mathf.Sqrt(Mathf.Pow(CurrentTile.X - NextTile.X, 2) + Mathf.Pow(CurrentTile.Y - NextTile.Y, 2));
         
-        // myTODO: speed used THERE (linear, permanent, not changing now)
-        float distThisFrame = deltaTime * Speed;
+        // GASystem : added stamina velocity
+        float currentSpeed = GetCurrentMoveSpeed(deltaTime);
+        float distThisFrame = deltaTime * currentSpeed;
 
         float percThisFrame = distThisFrame / distToTravel;
         movePercentage += percThisFrame;
@@ -723,11 +755,11 @@ public abstract class Animal
         return this.partner;
     }
 
-    public abstract void GiveBirth();
+    public abstract void GiveBirth(Animal father);
 
-    public  void Impregnate()
+    public  void Impregnate(Animal father)
     {
-        pregnacy = new Pregnancy(this);
+        pregnacy = new Pregnancy(this, father);
         timeSinceLastBreeded = 0f;
     }
 
@@ -764,4 +796,108 @@ public abstract class Animal
     {
         OnAnimalChangedCallback -= cb;
     }
+
+    #region GASystem
+    // Stamina methods
+    protected virtual bool ShouldUseSprint()
+    {
+        if (AnimalType == AnimalType.Predator)
+        {
+            return CurrentState == AnimalState.FoundFood && CurrentStamina > 0f;
+        }
+
+        if (AnimalType == AnimalType.Prey)
+        {
+            return this is Prey prey && prey.IsBeingChased && CurrentStamina > 0f;
+        }
+
+        return false;
+    }
+
+    protected float GetCurrentMoveSpeed(float deltaTime)
+    {
+        bool wantsSprint = ShouldUseSprint();
+
+        if (wantsSprint && CurrentStamina > 0f)
+        {
+            IsSprinting = true;
+
+            CurrentStamina -= staminaDrainPerSecond * deltaTime;
+            CurrentStamina = Mathf.Clamp(CurrentStamina, 0f, MaxStamina);
+
+            return Speed * sprintSpeedMultiplier;
+        }
+
+        IsSprinting = false;
+
+        CurrentStamina += staminaRegenPerSecond * deltaTime;
+        CurrentStamina = Mathf.Clamp(CurrentStamina, 0f, MaxStamina);
+
+        return Speed;
+    }
+
+    // Needs methods
+    protected void UpdateNeedsByTemp(float deltaTime)
+    {
+        EnvironmentData env = WorldController.Instance.World.Environment.GetEnvironment(CurrentTile);
+        float tempDiff = env.Temperature - Genome.tempResist;
+
+        float baseHungerLoss = deltaTime * TimeController.Instance.GetTimesADayMultiplier(Genome.hungerDecreasingSpeed);
+        float baseThirstLoss = deltaTime * TimeController.Instance.GetTimesADayMultiplier(Genome.thirstDecreasingSpeed);
+
+        float tempSensitivity = 0.03f;
+
+        if (tempDiff > 0f)
+        {
+            // need more water - too hot
+            float thirstMultiplier = 1f + Mathf.Abs(tempDiff) * tempSensitivity; //0.05f + Mathf.Abs(tempDiff) * tempSensitivity;
+
+            Hunger -= baseHungerLoss;
+            Thirst -= baseThirstLoss * thirstMultiplier;
+        }
+        else if (tempDiff < 0f)
+        {
+            // need more food - too cold
+            float hungerMultiplier = 1f + Mathf.Abs(tempDiff) * tempSensitivity; //0.05f + Mathf.Abs(tempDiff) * tempSensitivity;
+
+            Hunger -= baseHungerLoss * hungerMultiplier;
+            Thirst -= baseThirstLoss;
+        }
+        else
+        {
+            Hunger -= baseHungerLoss;
+            Thirst -= baseThirstLoss;
+        }
+
+        ApplyStaminaMetabolicCost(deltaTime);
+
+        Hunger = Mathf.Clamp(Hunger, 0f, 1f);
+        Thirst = Mathf.Clamp(Thirst, 0f, 1f);
+    }
+
+    // price for big stamina (can run faster, but need more food)
+    protected void ApplyStaminaMetabolicCost(float deltaTime)
+    {
+        float staminaCostPerDay = Genome.maxStamina * 0.15f;
+
+        float staminaCost = deltaTime * TimeController.Instance.GetTimesADayMultiplier(staminaCostPerDay);
+
+        if (IsSprinting)
+        {
+            staminaCost *= 2f;
+        }
+
+        Hunger -= staminaCost;
+    }
+
+    // GASystem
+    protected void UpdateEvolutionStats(float deltaTime)
+    {
+        EvolutionStats.TimeAliveInGeneration += deltaTime;
+        if (CurrentState == AnimalState.Hiding)
+        {
+            EvolutionStats.TimeSpentHiding += deltaTime;
+        }
+    }
+    #endregion
 }

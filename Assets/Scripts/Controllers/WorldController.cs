@@ -16,7 +16,7 @@ public class WorldController : MonoBehaviour
     public AnimalSpriteController AnimalSpriteController;
     public EventLogController EventLogController;
     private Process graphWindow;
-    public GAManager ga;
+    public GAManager gaManager; // GASystem
 
     private EnvironmentDebugView debugView; // EnvSystem: DebugView
     private bool debugViewEnabled = false;
@@ -28,7 +28,7 @@ public class WorldController : MonoBehaviour
     public float Days = 0;
 
     public float nutritionNeeded = 40f;
-    public int ShelterCount = 10;
+    public int shelterCount = 20;
     public ShelterSpriteController ShelterSpriteController;
 
     //-------Creation Variables-------------//
@@ -63,13 +63,17 @@ public class WorldController : MonoBehaviour
     // Update is called once per frame
     void LateUpdate()
     {
-        World.Update(TimeController.TimeMultiplier * Time.deltaTime);
+        float gameDeltaTime = TimeController.TimeMultiplier * Time.deltaTime;
+
+        World.Update(gameDeltaTime);
+        
+        gaManager.Update(gameDeltaTime); // GASystem : frequency of calling GASystem is set HERE
     }
 
     private void InitialiseTiles()
     {
         World = new World(Width, Height);
-        ga = new GAManager(World); // GASystem: init of GA object
+        gaManager = new GAManager(World); // GASystem : init of GA object
 
         World.AnimalManager.RegisterOnAnimalCreatedCallback(AnimalSpriteController.OnAnimalCreated);
         World.AnimalManager.RegisterOnAnimalDestroyedCallback(AnimalSpriteController.OnAnimalDestroyed);
@@ -89,12 +93,12 @@ public class WorldController : MonoBehaviour
             }
         }
 
-        //207
+        // seed: 207
         World.GenerateTerrain(WorldSeed, WaterLevel, AridityLevel, WorldType);
 
-        // EnvSystem: init after terrain
+        // EnvSystem : init after terrain
         World.Environment.Initialize();
-        World.SpawnInitialShelters(ShelterCount);
+        World.SpawnInitialShelters(shelterCount);
 
         World.SproutInitialFood();
         World.SpawnAnimals(PreyCount, PredatorCount);
@@ -136,7 +140,7 @@ public class WorldController : MonoBehaviour
         }
     }
 
-    // EnvSystem: Button for DebugView
+    // EnvSystem : Button for DebugView
     public void ToggleEnvironmentDebugView()
     {
         debugViewEnabled = !debugViewEnabled;
@@ -165,7 +169,8 @@ public class WorldController : MonoBehaviour
         TimeController.Instance.RegisterOnNewDayCallback(World.FoodManager.OnNewDay);
         TimeController.Instance.RegisterOnNewDayCallback(o => WorldCountLog());
         TimeController.Instance.RegisterOnNewDayCallback(World.EventManager.OnNewDay);
-
+        // GASystem
+        //TimeController.Instance.RegisterOnNewDayCallback(o => ga.OnNewDay());
     }
 
     private void OnApplicationQuit()

@@ -38,7 +38,7 @@ public class EnvironmentSystem
     private List<TemperatureSource> sources = new List<TemperatureSource>();
     private float dayTimer;
     private float dayInterval;
-    private int changesPerDay = 10;
+    private int changesPerDay = 3;
     //---------------------
 
     public void Initialize()
@@ -215,11 +215,11 @@ public class EnvironmentSystem
 
                 // variation of conditions
                 if (roll < 0.5f)
-                    delta = UnityEngine.Random.Range(-5f, 5f); // easy
+                    delta = UnityEngine.Random.Range(-10f, 10f); // easy
                 else if (roll < 0.7f)
-                    delta = UnityEngine.Random.Range(-10f, 10f); // medium
+                    delta = UnityEngine.Random.Range(-15f, 15f); // medium
                 else
-                    delta = UnityEngine.Random.Range(-20f, 20f); // hard
+                    delta = UnityEngine.Random.Range(-30f, 30f); // hard
 
                 s.currentOffset += delta;
                 s.currentOffset = Mathf.Clamp(s.currentOffset, -60f, 60f);

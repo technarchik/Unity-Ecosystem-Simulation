@@ -201,7 +201,7 @@ namespace Assets.Scripts.Model
             removeFromBreedList(father);
             removeFromBreedList(mother);
 
-            mother.Impregnate();
+            mother.Impregnate(father);
             Debug.Log(father + " Impregnated " + mother);
         }
 
@@ -222,7 +222,7 @@ namespace Assets.Scripts.Model
                 father = searcher;
             }
 
-            mother.Impregnate();
+            mother.Impregnate(father);
             Debug.Log(father + " Impregnated " + mother);
         }
     }

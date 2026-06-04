@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class DecisionGenomePrey
+public class DecisionGenomePrey : DecisionGenomeBase<DecisionGenomePrey>
 {
     // weights decision making
     public float hungerWeight;          // role of the hunger in decision making
@@ -8,10 +8,7 @@ public class DecisionGenomePrey
     public float fearWeight;            // how strongly does prey react to a danger 
     public float hideSeekingWeight;     // the desire to seek shelter
     public float riskTolerance;         // willingness to risk
-    public float explorationWeight;     // willingness to explore
-
-    // fitness
-    public float fitness;
+    public float explorationWeight;     // willingness to explore ?? dont use
 
     public static DecisionGenomePrey Random()
     {
@@ -21,12 +18,12 @@ public class DecisionGenomePrey
             thirstWeight = UnityEngine.Random.Range(0f, 1f),
             fearWeight = UnityEngine.Random.Range(0f, 1f),
             hideSeekingWeight = UnityEngine.Random.Range(0f, 1f),
-            riskTolerance = UnityEngine.Random.Range(0f, 1f),
+            riskTolerance = UnityEngine.Random.Range(0f, 0f),
             explorationWeight = UnityEngine.Random.Range(0f, 1f)
         };
     }
 
-    public DecisionGenomePrey Clone()
+    public override DecisionGenomePrey Clone()
     {
         return new DecisionGenomePrey
         {

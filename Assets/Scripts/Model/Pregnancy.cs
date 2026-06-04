@@ -9,17 +9,19 @@ namespace Assets.Scripts.Model
     public class Pregnancy
     {
         private Animal mother;
-        public float TimeUntilBirth { get; protected set; }
-        
+        private Animal father;
 
-        public Pregnancy(Animal mother) 
+        public float TimeUntilBirth { get; protected set; }
+
+        public Pregnancy(Animal mother, Animal father)
         {
-            TimeUntilBirth = 
-                mother is Predator 
-                ? ((TimeController.Instance.SECONDS_IN_A_DAY * 3) * WorldController.PredatorBreedingRate) 
+            TimeUntilBirth =
+                mother is Predator
+                ? ((TimeController.Instance.SECONDS_IN_A_DAY * 1) * WorldController.PredatorBreedingRate)
                 : ((TimeController.Instance.SECONDS_IN_A_DAY * 1) * WorldController.PreyBreedingRate);
 
             this.mother = mother;
+            this.father = father;
         }
 
         public void UpdatePregnancy(float deltatime) 
@@ -34,7 +36,7 @@ namespace Assets.Scripts.Model
 
         private void GiveBirth() 
         {
-            mother.GiveBirth();
+            mother.GiveBirth(father);
         }
 
         private void MisCarry() 

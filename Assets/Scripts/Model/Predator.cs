@@ -7,10 +7,17 @@ public class Predator : Animal
 {
 
     public Prey CurrentTarget { get; protected set; }
+    public DecisionGenomePredator DecisionGenome { get; set; }
+
+    // for "following prey" system
+    private float currentFollowingTime = 0f;
+    private float minFollowingTime = 2f;
+    private float maxFollowingTime = 15f;
 
     public Predator(Tile tile, AnimalManager animalManager, int id, Gender gender, Predator mother, Genome genome) : base(tile, AnimalType.Predator, animalManager, id, gender, mother, genome) 
     {
-        breedingCooldown = (4 * TimeController.Instance.SECONDS_IN_A_DAY) * WorldController.PredatorBreedingRate;
+        breedingCooldown = (1f * TimeController.Instance.SECONDS_IN_A_DAY) * WorldController.PredatorBreedingRate;
+        DecisionGenome = DecisionGenomePredator.Random();
     }
 
     /// <summary>
@@ -50,14 +57,16 @@ public class Predator : Animal
     /// <param name="deltaTime">Time between last frame.</param>
     public override void Update(float deltaTime)
     {
-        Hunger -= (deltaTime * TimeController.Instance.GetTimesADayMultiplier(this.Genome.hungerDecreasingSpeed));
-        Thirst -= (deltaTime * TimeController.Instance.GetTimesADayMultiplier(this.Genome.thirstDecreasingSpeed));
+        //Hunger -= (deltaTime * TimeController.Instance.GetTimesADayMultiplier(this.Genome.hungerDecreasingSpeed));
+        //Thirst -= (deltaTime * TimeController.Instance.GetTimesADayMultiplier(this.Genome.thirstDecreasingSpeed));
+        UpdateNeedsByTemp(deltaTime);
         //Stamina -= (deltaTime * TimeController.Instance.GetTimesADayMultiplier());
         UpdateHP(deltaTime);
         timeSinceLastBreeded += deltaTime;
         UpdateAge(deltaTime);
         UpdateDoMovement(deltaTime);
         UpdatePregnancy(deltaTime);
+        UpdateEvolutionStats(deltaTime); // GASystem
 
         switch (CurrentState)
         {
@@ -191,10 +200,18 @@ public class Predator : Animal
         // TODO: add some kind of timer? chance to fail?
         CurrentTarget.SetIsBeingChased(false);
         CurrentTarget.GetEaten();
+
+        EvolutionStats.SuccessfulHunts++; // GASystem
+
         CurrentTarget = null;
         CurrentState = AnimalState.Idle;
         Hunger = 1f;
         Debug.Log("Done eating - Predator");
+    }
+
+    private float GetMaxFollowingTime()
+    {
+        return Mathf.Lerp(minFollowingTime, maxFollowingTime, DecisionGenome.timeFollowingWeight);
     }
 
     /// <summary>
@@ -203,21 +220,27 @@ public class Predator : Animal
     /// <param name="deltaTime">Time between last frame.</param>
     public void UpdateDoFoundFood(float deltaTime)
     {
-        // to think about it! EnvSystem : fear #todo
-        // (waiting for prey to stop hiding)
+
         if (CurrentTarget == null)
         {
+            CurrentState = AnimalState.Idle;
+            return;
+        }
+        currentFollowingTime += deltaTime;
+        EvolutionStats.TimeSpentFollowing += deltaTime;
+
+        if (ShouldAbandonTarget())
+        {
+            AbandonCurrentTarget();
             CurrentState = AnimalState.Idle;
             return;
         }
 
         if (CurrentTarget.IsHiding)
         {
-            Tile shelterTile = CurrentTarget.CurrentTile;
-            Tile waitingTile = GetClosestWaitingTileNearShelter(shelterTile);
-
-            DestinationTile = waitingTile != null ? waitingTile : CurrentTile;
-
+            // waiting near shelter
+            
+            DestinationTile = CurrentTarget.CurrentTile;
             if (CurrentTile == DestinationTile)
             {
                 StopMovement();
@@ -232,12 +255,48 @@ public class Predator : Animal
             DestinationTile = CurrentTarget.CurrentTile;
         }
 
-        // TODO: Change this to within a range?
+
         if (CurrentTile == DestinationTile)
         {
             StopMovement();
             CurrentState = AnimalState.Eating;
         }
+    
+        //// to think about it! EnvSystem : fear #todo
+        //// (waiting for prey to stop hiding)
+        //if (CurrentTarget == null)
+        //{
+        //    CurrentState = AnimalState.Idle;
+        //    return;
+        //}
+
+        //if (CurrentTarget.IsHiding)
+        //{
+        //    Tile shelterTile = CurrentTarget.CurrentTile;
+        //    Tile waitingTile = GetClosestWaitingTileNearShelter(shelterTile);
+
+        //    DestinationTile = waitingTile != null ? waitingTile : CurrentTile;
+
+        //    if (CurrentTile == DestinationTile)
+        //    {
+        //        StopMovement();
+        //    }
+
+        //    return;
+        //}
+
+
+        //if (DestinationTile != CurrentTarget.CurrentTile)
+        //{
+        //    DestinationTile = CurrentTarget.CurrentTile;
+        //}
+
+        //// TODO: Change this to within a range?
+        //if (CurrentTile == DestinationTile)
+        //{
+        //    StopMovement();
+        //    CurrentState = AnimalState.Eating;
+        //}
     }
 
     /// <summary>
@@ -254,10 +313,7 @@ public class Predator : Animal
 
         if (closestPreyICanSee != null)
         {
-            CurrentState = AnimalState.FoundFood;
-            CurrentTarget = closestPreyICanSee;
-            closestPreyICanSee.SetIsBeingChased(true);
-            DestinationTile = closestPreyICanSee.CurrentTile;
+            StartFollowingTarget(closestPreyICanSee);
         }
         else
         {
@@ -267,7 +323,27 @@ public class Predator : Animal
             //Tile dest = WorldController.Instance.World.GetRandomNonWaterTileInRadius(CurrentTile, 5);
             Tile dest = CurrentTile.GetRandomNonWaterTileInRadius(5);
             DestinationTile = dest;
+
+            //CurrentState = AnimalState.SeekFood;
+            //DestinationTile = CurrentTile.GetRandomNonWaterTileInRadius(5);
         }
+
+        //if (closestPreyICanSee != null)
+        //{
+        //    CurrentState = AnimalState.FoundFood;
+        //    CurrentTarget = closestPreyICanSee;
+        //    closestPreyICanSee.SetIsBeingChased(true);
+        //    DestinationTile = closestPreyICanSee.CurrentTile;
+        //}
+        //else
+        //{
+        //    // We need to pick a direction to walk in to seek
+        //    CurrentState = AnimalState.SeekFood;
+        //    // TODO: meta game this so they walk near prey
+        //    //Tile dest = WorldController.Instance.World.GetRandomNonWaterTileInRadius(CurrentTile, 5);
+        //    Tile dest = CurrentTile.GetRandomNonWaterTileInRadius(5);
+        //    DestinationTile = dest;
+        //}
     }
 
     /// <summary>
@@ -334,7 +410,7 @@ public class Predator : Animal
         //Aging up
         if (lifeStage != LifeStage.Elder)
         {
-            if (age == 3 && lifeStage != LifeStage.Adult)
+            if (age == 1 && lifeStage != LifeStage.Adult)
             {
                 lifeStage = LifeStage.Adult;
                 Debug.Log(this.ToString() + "is now an Adult");
@@ -382,26 +458,54 @@ public class Predator : Animal
         this.lifeStage = LifeStage.Elder;
     }
 
-    public override void GiveBirth()
+    public override void GiveBirth(Animal father)
     {
-        int litterSize = UnityEngine.Random.Range(1, 3); // myTODO: should be genome.fertility
+        Predator fatherPredator = father as Predator;
+
+        if (fatherPredator == null)
+        {
+            Debug.LogError($"{this} cannot give birth: father is null or not Predator.");
+            pregnacy = null;
+            return;
+        }
+
+        int litterSize = Mathf.RoundToInt(Genome.fertility);
 
         for (int i = 0; i < litterSize; i++)
         {
-            Predator child = AnimalManager.SpawnPredator(CurrentTile, this, this.Genome); // myTODO: здесь метод передачи генома от родителя ребенку Genome.Inheritance
+            Genome childGenome = GenomeInheritance.CreateChildGenome(this.Genome,fatherPredator.Genome,AnimalType.Predator);
+
+            DecisionGenomePredator childDecisionGenome = DecisionGenomeInheritance.CreateChildPredatorGenome(this.DecisionGenome,fatherPredator.DecisionGenome);
+
+            Predator child = AnimalManager.SpawnPredator(CurrentTile, this, childGenome);
+            child.DecisionGenome = childDecisionGenome;
             child.CurrentState = AnimalState.FollowingParent;
         }
 
-        Debug.Log(this + " - Gives Birth");
-
         pregnacy = null;
         timeSinceLastBreeded = 0f;
-
-        // counter for fitness
-        // myTODO: else think about father - he has no counter (before ClearPartner in Animal.cs (482))
-        // this.ChildrenCount += litterSize;
-        // getPartner().ChildrenCount += litterSize;
         TotalChildrenCount += litterSize;
+        EvolutionStats.ChildrenCount += litterSize;
+
+
+        //int litterSize = UnityEngine.Random.Range(1, 3); // myTODO: should be genome.fertility
+
+        //for (int i = 0; i < litterSize; i++)
+        //{
+        //    Predator child = AnimalManager.SpawnPredator(CurrentTile, this, this.Genome); // myTODO: здесь метод передачи генома от родителя ребенку Genome.Inheritance
+        //    child.CurrentState = AnimalState.FollowingParent;
+        //}
+
+        //Debug.Log(this + " - Gives Birth");
+
+        //pregnacy = null;
+        //timeSinceLastBreeded = 0f;
+
+        //// counter for fitness
+        //// myTODO: else think about father - he has no counter (before ClearPartner in Animal.cs (482))
+        //// this.ChildrenCount += litterSize;
+        //// getPartner().ChildrenCount += litterSize;
+        //TotalChildrenCount += litterSize;
     }
 
     // for waiting Prey NEAR shelter, not on it
@@ -433,6 +537,80 @@ public class Predator : Animal
 
         return closest;
     }
+
+
+    #region Smart hunting
+    // change target
+    private void StartFollowingTarget(Prey target)
+    {
+        CurrentTarget = target;
+        currentFollowingTime = 0f;
+        CurrentTarget.SetIsBeingChased(true);
+        DestinationTile = CurrentTarget.CurrentTile;
+        CurrentState = AnimalState.FoundFood;
+    }
+
+    // refuse from chosen target
+    private bool ShouldAbandonTarget()
+    {
+        float maxFollowTime = GetMaxFollowingTime();
+        float hungerPressure = (1f - Hunger) * DecisionGenome.hungerWeight;
+        float thirstPressure = (1f - Thirst) * DecisionGenome.thirstWeight;
+        // Если жажда стала важнее охоты, бросить цель.
+        if (IsThirsty() && thirstPressure > hungerPressure * 1.2f)
+        {
+            return true;
+        }
+        if (currentFollowingTime >= maxFollowTime)
+        {
+            return true;
+        }
+        return false;
+    }
+    private void AbandonCurrentTarget()
+    {
+        if (CurrentTarget != null)
+        {
+            CurrentTarget.SetIsBeingChased(false);
+            CurrentTarget = null;
+        }
+        EvolutionStats.AbandonedChases++;
+        currentFollowingTime = 0f;
+    }
+
+    #endregion
+
+
+    #region GASystem
+    // decision making
+    private AnimalState DecidePredatorState()
+    {
+        float hungerPressure = (1f - Hunger) * DecisionGenome.hungerWeight;
+        float thirstPressure = (1f - Thirst) * DecisionGenome.thirstWeight;
+        // Если жажда критична, она может прервать охоту.
+        if (Thirst <= 0f)
+        {
+            return AnimalState.Thirsty;
+        }
+        if (Hunger <= 0f)
+        {
+            return AnimalState.Hungry;
+        }
+        if (thirstPressure > hungerPressure && IsThirsty())
+        {
+            return AnimalState.Thirsty;
+        }
+        if (hungerPressure >= thirstPressure && IsHungry())
+        {
+            return AnimalState.Hungry;
+        }
+        if (IsReadyToBreed())
+        {
+            return AnimalState.ReadyToBreed;
+        }
+        return AnimalState.Wandering;
+    }
+    #endregion
 
     override
     public string ToString()

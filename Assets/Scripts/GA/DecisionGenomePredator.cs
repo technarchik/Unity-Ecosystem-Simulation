@@ -2,18 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DecisionGenomePredator
+public class DecisionGenomePredator : DecisionGenomeBase<DecisionGenomePredator>
 {
     // weights decision making
     public float hungerWeight;          // role of the hunger in decision making
     public float thirstWeight;          // role of the thirst
-    public float aggressionWeight;      // how strongly does prey react to a danger 
+    public float aggressionWeight;      // aggression weight ? dont use 
     public float timeFollowingWeight;   // how long following prey
     //public float riskTolerance;         // willingness to take risks
     //public float explorationWeight;     // willingness to explore
-
-    // fitness
-    public float fitness;
 
     public static DecisionGenomePredator Random()
     {
@@ -26,7 +23,7 @@ public class DecisionGenomePredator
         };
     }
 
-    public DecisionGenomePredator Clone()
+    public override DecisionGenomePredator Clone()
     {
         return new DecisionGenomePredator
         {
